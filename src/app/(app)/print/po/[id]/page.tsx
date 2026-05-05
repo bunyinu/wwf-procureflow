@@ -16,6 +16,22 @@ import {
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const po = await prisma.purchaseOrder.findUnique({
+    where: { id: params.id },
+    select: { poNumber: true },
+  });
+  return {
+    title: po
+      ? `Bon-de-Commande-${po.poNumber}-WWF-RDC`
+      : "Bon-de-Commande-WWF-RDC",
+  };
+}
+
 export default async function PrintablePO({
   params,
 }: {

@@ -15,6 +15,25 @@ import {
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const r = await prisma.goodsReceipt.findUnique({
+    where: { id: params.id },
+    select: {
+      receiptType: true,
+      purchaseOrder: { select: { poNumber: true } },
+    },
+  });
+  if (!r) return { title: "Reception-WWF-RDC" };
+  const kind = r.receiptType === "SAN" ? "Acceptation-Service" : "Reception";
+  return {
+    title: `${kind}-${r.purchaseOrder.poNumber}-WWF-RDC`,
+  };
+}
+
 export default async function PrintableReceipt({
   params,
 }: {

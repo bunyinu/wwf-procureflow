@@ -10,6 +10,11 @@ import {
 
 export const dynamic = "force-dynamic";
 
+export function generateMetadata() {
+  const today = new Date().toISOString().slice(0, 10);
+  return { title: `Etat-Budget-${today}-WWF-RDC` };
+}
+
 export default async function PrintableBudget() {
   await requireUser();
   const [budgetLines, projects, requisitions] = await Promise.all([

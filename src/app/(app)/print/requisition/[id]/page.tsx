@@ -20,6 +20,22 @@ import type { Role } from "@/lib/enums";
 
 export const dynamic = "force-dynamic";
 
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const r = await prisma.purchaseRequisition.findUnique({
+    where: { id: params.id },
+    select: { requisitionNumber: true },
+  });
+  return {
+    title: r
+      ? `Requisition-${r.requisitionNumber}-WWF-RDC`
+      : "Requisition-WWF-RDC",
+  };
+}
+
 export default async function PrintableRequisition({
   params,
 }: {

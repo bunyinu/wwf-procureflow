@@ -11,6 +11,11 @@ import {
 
 export const dynamic = "force-dynamic";
 
+export function generateMetadata() {
+  const today = new Date().toISOString().slice(0, 10);
+  return { title: `Rapport-Audit-${today}-WWF-RDC` };
+}
+
 export default async function PrintableAudit({
   searchParams,
 }: {
