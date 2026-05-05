@@ -7,6 +7,7 @@ import {
   documentCategoriesForRequisitionUpload,
   REQUISITION_DOCUMENT_CATEGORIES,
 } from "../src/lib/document-permissions";
+import { optionalFormString } from "../src/lib/form";
 import { can } from "../src/lib/permissions";
 import {
   PROCUREMENT_INTERCONNECTION,
@@ -195,6 +196,10 @@ assert.equal(can(actor(Role.REPORTING), "update", "user"), false, "reporting can
 assert.equal(can(actor(Role.ADMIN), "update", "user"), true, "admin configures users");
 assert.equal(can(actor(Role.ADMIN), "delete", "auditLog"), false, "admin cannot delete immutable audit history");
 assert.equal(can(actor(Role.ADMIN), "decide", "requisition", procurementReview), false, "admin cannot secretly change workflow records");
+
+assert.equal(optionalFormString(null), undefined, "missing optional form fields must not fail validation");
+assert.equal(optionalFormString(""), undefined, "blank optional form fields must not fail validation");
+assert.equal(optionalFormString(" 2026-05-21 "), "2026-05-21", "optional form strings are trimmed when present");
 
 assert.deepEqual(
   REQUISITION_DOCUMENT_CATEGORIES,

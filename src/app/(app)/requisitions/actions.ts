@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { assertCan } from "@/lib/permissions";
+import { optionalFormString } from "@/lib/form";
 import {
   ApprovalDecision,
   POStatus,
@@ -55,7 +56,7 @@ export async function createRequisitionAction(formData: FormData) {
   const submit = formData.get("intent") === "submit";
 
   const result = requisitionSchema.safeParse({
-    title: formData.get("title") || undefined,
+    title: optionalFormString(formData.get("title")),
     description: formData.get("description"),
     quantity: formData.get("quantity") || 1,
     unit: formData.get("unit") || "unité",
@@ -65,7 +66,7 @@ export async function createRequisitionAction(formData: FormData) {
     amount: formData.get("amount"),
     currency: formData.get("currency") || "USD",
     priority: formData.get("priority"),
-    expectedDeliveryDate: formData.get("expectedDeliveryDate") as string,
+    expectedDeliveryDate: optionalFormString(formData.get("expectedDeliveryDate")),
     justification: formData.get("justification"),
   });
   if (!result.success) {
