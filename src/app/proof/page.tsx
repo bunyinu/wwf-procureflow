@@ -65,138 +65,194 @@ const cards: Array<{
   },
 ];
 
-// Conformance map TDR §4 ↔ features delivered in the prototype.
+// Conformance map TDR §4 ↔ features delivered, with the role responsible.
 const conformance: Array<{
   tdr: string;
+  role: string;
   status: "done" | "exceed";
   evidence: string;
   link?: string;
 }> = [
   {
-    tdr: "§4.1 Création/soumission électronique des réquisitions",
+    tdr: "§4.1 Création/soumission électronique",
+    role: "Demandeur",
     status: "done",
-    evidence: "Pages /requisitions et /requisitions/new",
+    evidence: "Formulaire /requisitions/new",
     link: "/requisitions",
   },
   {
     tdr: "§4.1 Numéro unique automatique",
+    role: "Système",
     status: "done",
     evidence: "Format PR-AAAA-NNNN généré côté serveur",
   },
   {
-    tdr: "§4.1 Saisie infos clés (dépt, projet, description, quantité, budget, ligne)",
+    tdr: "§4.1 Saisie infos clés (dépt, projet, quantité, budget, ligne)",
+    role: "Demandeur (saisit) · Admin (référentiels)",
     status: "done",
-    evidence: "Formulaire complet avec quantité + unité de mesure",
+    evidence: "Champs + listes peuplées par /admin/projects, /admin/budget-lines, /admin/departments",
   },
   {
-    tdr: "§4.1 Pièces justificatives + sécurité",
+    tdr: "§4.1 Pièces justificatives",
+    role: "Demandeur + tous les rôles du circuit",
     status: "done",
-    evidence: "Documents liés au dossier · MinIO en production",
+    evidence: "Zone de dépôt sur réquisition · MinIO en production",
   },
   {
-    tdr: "§4.2 Validation hiérarchique selon les seuils",
+    tdr: "§4.1 Sécurité des accès",
+    role: "Admin",
     status: "done",
-    evidence: "3 paliers configurables (<1k, 1k–10k, >10k USD)",
+    evidence: "Matrice des droits + Keycloak en production",
+    link: "/admin/settings",
+  },
+  {
+    tdr: "§4.2 Validation hiérarchique selon seuils",
+    role: "Manager · Achats · Finance · Direction (>10k USD)",
+    status: "done",
+    evidence: "3 paliers (<1k, 1k–10k, >10k USD)",
     link: "/admin/settings",
   },
   {
     tdr: "§4.2 Acheminement automatique",
+    role: "Système",
     status: "done",
-    evidence: "currentApproverRole calculé côté serveur",
+    evidence: "currentApproverRole calculé après chaque décision",
   },
   {
     tdr: "§4.2 Notifications automatiques",
+    role: "Système (déclenche) · destinataire selon rôle",
     status: "done",
-    evidence: "Centre de notifications + cloche en haut · SMTP/SMS en production",
+    evidence: "/notifications + cloche · SMTP / SMS en production",
     link: "/notifications",
   },
   {
     tdr: "§4.2 Historique complet des décisions",
+    role: "Système (consigne) · lu par Auditeur",
     status: "done",
-    evidence: "Table Approvals + journal d'audit",
+    evidence: "Table Approvals + journal d'audit immuable",
   },
   {
     tdr: "§4.2 Structuration obligatoire des étapes",
+    role: "Système",
     status: "done",
     evidence: "Machine à états vérifiée par assertCan() + isValidTransition()",
   },
   {
     tdr: "§4.3 Identification des processus en cours/approuvés/rejetés/clôturés",
+    role: "Tous (vue scopée par rôle)",
     status: "done",
     evidence: "11 statuts, badges colorés, filtres",
   },
   {
     tdr: "§4.3 Suivi des délais par étape",
+    role: "Tous · alertes sur file pour Manager/Achats/Finance",
     status: "exceed",
     evidence: "Panneau dédié sur chaque réquisition + SLA paramétrable",
   },
   {
     tdr: "§4.3 Identification des retards",
+    role: "Manager/Achats/Finance (à leur niveau) · Auditeur/Admin (vue globale)",
     status: "exceed",
     evidence: "Badge « SLA dépassé » par étape + KPI dashboard",
   },
   {
-    tdr: "§4.4 Classification automatique des achats (5 types)",
+    tdr: "§4.4 Classification automatique (5 types)",
+    role: "Demandeur (choisit) · Achats (peut reclasser)",
     status: "done",
     evidence: "Direct, Préqualifié, Cotations, Appel d'offres, Source unique",
   },
   {
     tdr: "§4.4 Définition étapes & responsabilités",
+    role: "Admin",
     status: "exceed",
     evidence: "Matrice des droits exposée dans /admin/settings",
     link: "/admin/settings",
   },
   {
     tdr: "§4.4 Analyse des offres",
+    role: "Achats (saisit/compare) · Finance (consulte)",
     status: "exceed",
-    evidence: "Module comparatif technique + financier sur la réquisition",
+    evidence: "Tableau comparatif technique + financier sur la réquisition",
   },
   {
     tdr: "§4.4 Attribution et suivi des marchés",
+    role: "Achats (émet PO) · Finance (consulte engagement)",
     status: "done",
-    evidence: "Bons de commande + suivi statut + supplier link",
+    evidence: "Bons de commande + suivi statut + lien fournisseur",
     link: "/purchase-orders",
   },
   {
     tdr: "§4.5 Préqualification + diligence raisonnable",
+    role: "Achats (exécute) · Auditeur (vérifie) · Admin (oversight)",
     status: "done",
-    evidence: "Checklist + statut visible sur chaque fournisseur",
+    evidence: "Checklist + statut + Annexe B visible sur chaque fournisseur",
     link: "/suppliers",
   },
   {
+    tdr: "§4.5 Suivi des fournisseurs et commandes",
+    role: "Achats (op) · Finance/Admin/Auditeur (consultation)",
+    status: "done",
+    evidence: "/suppliers, /purchase-orders, /receipts",
+  },
+  {
     tdr: "§4.6 Module GRN + Service Acceptance Note",
+    role: "Achats (signe) · Demandeur (peut témoigner)",
     status: "done",
     evidence: "Réceptions GRN/SAN avec écarts documentés",
     link: "/receipts",
   },
   {
-    tdr: "§4.7 Archivage sécurisé + droits d'accès",
+    tdr: "§4.6 Observations + justificatifs",
+    role: "Achats (consigne) · Auditeur (consulte)",
     status: "done",
-    evidence: "Documents par dossier, matrice de permissions, audit",
+    evidence: "Champs notes + écart + pièces jointes par PV",
+  },
+  {
+    tdr: "§4.7 Archivage sécurisé + droits d'accès",
+    role: "Système (auto) · Admin (configure droits)",
+    status: "done",
+    evidence: "Documents par dossier, matrice de permissions",
   },
   {
     tdr: "§4.7 Recherche rapide des documents",
+    role: "Tous (vue scopée)",
     status: "exceed",
-    evidence: "Explorateur global avec recherche full-text + facettes",
+    evidence: "Explorateur global avec recherche plein texte + facettes",
     link: "/documents",
   },
   {
     tdr: "§4.8 Tableau de bord interactif + KPI",
-    status: "done",
-    evidence: "Donut, sparkline, barres budgétaires",
+    role: "Tous · KPIs scopés par rôle",
+    status: "exceed",
+    evidence: "6 dashboards distincts (1 par rôle)",
     link: "/dashboard",
   },
   {
-    tdr: "§4.8 Export Excel + PDF",
+    tdr: "§4.8 Suivi des délais de traitement",
+    role: "Manager/Achats/Finance (op) · Auditeur (compliance)",
     status: "done",
-    evidence: "Exports CSV fonctionnels (réquisitions, budget, audit)",
+    evidence: "Tile « Respect des SLA » + cycle moyen sparkline",
+  },
+  {
+    tdr: "§4.8 Export Excel + PDF",
+    role: "Tous (selon contexte)",
+    status: "done",
+    evidence: "Exports CSV + 5 PDFs premium (PR, BC, GRN/SAN, Audit, Budget)",
     link: "/reports",
   },
   {
-    tdr: "§4.9 Profils + droits d'accès + traçabilité",
+    tdr: "§4.9 Profils utilisateurs + droits d'accès",
+    role: "Admin",
     status: "done",
-    evidence: "/admin/users, matrice des droits, audit log",
+    evidence: "/admin/users (CRUD complet) + matrice des droits",
     link: "/admin/users",
+  },
+  {
+    tdr: "§4.9 Traçabilité des actions",
+    role: "Système (auto) · Auditeur/Admin (consulte)",
+    status: "done",
+    evidence: "Journal d'audit immuable, hash chaîné en production",
+    link: "/audit",
   },
 ];
 
@@ -325,6 +381,7 @@ export default function ProofPage() {
               <thead>
                 <tr className="border-b border-ink-100 text-left text-[11px] uppercase tracking-wide text-ink-500">
                   <th className="px-3 py-2 font-medium">Exigence TDR</th>
+                  <th className="px-3 py-2 font-medium">Rôle responsable</th>
                   <th className="px-3 py-2 font-medium">Statut</th>
                   <th className="px-3 py-2 font-medium">Preuve dans le prototype</th>
                 </tr>
@@ -336,6 +393,7 @@ export default function ProofPage() {
                     className="border-b border-ink-50 last:border-none"
                   >
                     <td className="px-3 py-2 text-ink-800">{c.tdr}</td>
+                    <td className="px-3 py-2 text-xs text-ink-700">{c.role}</td>
                     <td className="px-3 py-2">
                       {c.status === "exceed" ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-wwf-50 px-2 py-0.5 text-[11px] font-medium text-wwf-700 ring-1 ring-wwf-100">
