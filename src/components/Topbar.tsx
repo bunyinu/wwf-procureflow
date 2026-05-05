@@ -6,10 +6,12 @@ import { logoutAction } from "@/app/(auth)/actions";
 
 const ROLE_ACCENT: Record<Role, string> = {
   REQUESTER: "bg-sky-50 text-sky-700 ring-sky-100",
-  MANAGER: "bg-amber-50 text-amber-700 ring-amber-100",
+  APPROVER: "bg-amber-50 text-amber-700 ring-amber-100",
   PROCUREMENT: "bg-purple-50 text-purple-700 ring-purple-100",
-  FINANCE: "bg-orange-50 text-orange-700 ring-orange-100",
+  SUPPLIER_MANAGER: "bg-rose-50 text-rose-700 ring-rose-100",
+  RECEIVER: "bg-teal-50 text-teal-700 ring-teal-100",
   AUDITOR: "bg-slate-50 text-slate-700 ring-slate-200",
+  REPORTING: "bg-indigo-50 text-indigo-700 ring-indigo-100",
   ADMIN: "bg-wwf-50 text-wwf-700 ring-wwf-100",
 };
 

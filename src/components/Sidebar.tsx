@@ -19,7 +19,6 @@ import {
   HelpCircle,
   Building2,
   PiggyBank,
-  Wallet,
   LucideIcon,
   Leaf,
 } from "lucide-react";
@@ -34,11 +33,11 @@ type NavItem = {
 
 type Section = { title: string; items: NavItem[] };
 
-// Each role gets its own curated, focused navigation. No more shared menus.
+// Strict per-role workspaces aligned with the TDR §4 process modules.
 const NAV_BY_ROLE: Record<Role, Section[]> = {
   REQUESTER: [
     {
-      title: "Espace de travail",
+      title: "Espace de demande",
       items: [
         { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
         { label: "Nouvelle réquisition", href: "/requisitions/new", icon: PlusCircle },
@@ -47,19 +46,17 @@ const NAV_BY_ROLE: Record<Role, Section[]> = {
       ],
     },
     {
-      title: "Pilotage",
-      items: [
-        { label: "Mes documents", href: "/documents", icon: FolderArchive },
-      ],
+      title: "Documents",
+      items: [{ label: "Mes documents", href: "/documents", icon: FolderArchive }],
     },
     {
       title: "Aide",
       items: [{ label: "Manuel utilisateur", href: "/aide", icon: HelpCircle }],
     },
   ],
-  MANAGER: [
+  APPROVER: [
     {
-      title: "Espace de travail",
+      title: "Espace d'approbation",
       items: [
         { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
         { label: "File d'approbation", href: "/approvals", icon: Inbox },
@@ -68,11 +65,8 @@ const NAV_BY_ROLE: Record<Role, Section[]> = {
       ],
     },
     {
-      title: "Pilotage",
-      items: [
-        { label: "Documents", href: "/documents", icon: FolderArchive },
-        { label: "Rapports", href: "/reports", icon: BarChart3 },
-      ],
+      title: "Documents",
+      items: [{ label: "Documents liés", href: "/documents", icon: FolderArchive }],
     },
     {
       title: "Aide",
@@ -81,57 +75,56 @@ const NAV_BY_ROLE: Record<Role, Section[]> = {
   ],
   PROCUREMENT: [
     {
-      title: "Espace de travail",
+      title: "Espace Achats",
       items: [
         { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
-        { label: "File d'approbation", href: "/approvals", icon: Inbox },
+        { label: "File classification", href: "/approvals", icon: Inbox },
         { label: "Réquisitions", href: "/requisitions", icon: FileText },
+        { label: "Bons de commande", href: "/purchase-orders", icon: ClipboardList },
         { label: "Notifications", href: "/notifications", icon: Bell },
       ],
     },
     {
-      title: "Achats",
-      items: [
-        { label: "Fournisseurs", href: "/suppliers", icon: Truck },
-        { label: "Bons de commande", href: "/purchase-orders", icon: ClipboardList },
-        { label: "Réceptions", href: "/receipts", icon: PackageCheck },
-      ],
-    },
-    {
-      title: "Pilotage",
-      items: [
-        { label: "Documents", href: "/documents", icon: FolderArchive },
-        { label: "Rapports", href: "/reports", icon: BarChart3 },
-      ],
+      title: "Documents",
+      items: [{ label: "Documents", href: "/documents", icon: FolderArchive }],
     },
     {
       title: "Aide",
       items: [{ label: "Manuel utilisateur", href: "/aide", icon: HelpCircle }],
     },
   ],
-  FINANCE: [
+  SUPPLIER_MANAGER: [
     {
-      title: "Espace de travail",
+      title: "Espace Fournisseurs",
       items: [
         { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
-        { label: "File d'approbation", href: "/approvals", icon: Inbox },
-        { label: "Réquisitions", href: "/requisitions", icon: FileText },
+        { label: "Registre fournisseurs", href: "/suppliers", icon: Truck },
+        { label: "Bons de commande", href: "/purchase-orders", icon: ClipboardList },
         { label: "Notifications", href: "/notifications", icon: Bell },
       ],
     },
     {
-      title: "Finance",
+      title: "Documents",
+      items: [{ label: "Documents", href: "/documents", icon: FolderArchive }],
+    },
+    {
+      title: "Aide",
+      items: [{ label: "Manuel utilisateur", href: "/aide", icon: HelpCircle }],
+    },
+  ],
+  RECEIVER: [
+    {
+      title: "Espace Réception",
       items: [
-        { label: "Grand livre budgétaire", href: "/finance/budget", icon: PiggyBank },
-        { label: "Trésorerie engagements", href: "/finance/cashflow", icon: Wallet },
+        { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
+        { label: "Réceptions à constater", href: "/receipts", icon: PackageCheck },
+        { label: "Bons de commande", href: "/purchase-orders", icon: ClipboardList },
+        { label: "Notifications", href: "/notifications", icon: Bell },
       ],
     },
     {
-      title: "Pilotage",
-      items: [
-        { label: "Documents", href: "/documents", icon: FolderArchive },
-        { label: "Rapports", href: "/reports", icon: BarChart3 },
-      ],
+      title: "Documents",
+      items: [{ label: "Documents", href: "/documents", icon: FolderArchive }],
     },
     {
       title: "Aide",
@@ -140,19 +133,28 @@ const NAV_BY_ROLE: Record<Role, Section[]> = {
   ],
   AUDITOR: [
     {
-      title: "Espace de travail",
+      title: "Espace Documents & Audit",
       items: [
         { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
+        { label: "Documents", href: "/documents", icon: FolderArchive },
+        { label: "Journal d'audit", href: "/audit", icon: ShieldCheck },
         { label: "Réquisitions", href: "/requisitions", icon: FileText },
         { label: "Notifications", href: "/notifications", icon: Bell },
       ],
     },
     {
-      title: "Conformité",
+      title: "Aide",
+      items: [{ label: "Manuel utilisateur", href: "/aide", icon: HelpCircle }],
+    },
+  ],
+  REPORTING: [
+    {
+      title: "Espace Reporting",
       items: [
-        { label: "Journal d'audit", href: "/audit", icon: ShieldCheck },
-        { label: "Documents", href: "/documents", icon: FolderArchive },
-        { label: "Rapports", href: "/reports", icon: BarChart3 },
+        { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
+        { label: "Rapports & exports", href: "/reports", icon: BarChart3 },
+        { label: "Réquisitions", href: "/requisitions", icon: FileText },
+        { label: "Notifications", href: "/notifications", icon: Bell },
       ],
     },
     {
@@ -162,7 +164,7 @@ const NAV_BY_ROLE: Record<Role, Section[]> = {
   ],
   ADMIN: [
     {
-      title: "Espace de travail",
+      title: "Console administrateur",
       items: [
         { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
         { label: "Réquisitions", href: "/requisitions", icon: FileText },
@@ -179,7 +181,7 @@ const NAV_BY_ROLE: Record<Role, Section[]> = {
       ],
     },
     {
-      title: "Pilotage",
+      title: "Pilotage & Audit",
       items: [
         { label: "Documents", href: "/documents", icon: FolderArchive },
         { label: "Rapports", href: "/reports", icon: BarChart3 },
@@ -187,13 +189,13 @@ const NAV_BY_ROLE: Record<Role, Section[]> = {
       ],
     },
     {
-      title: "Administration",
+      title: "Référentiels",
       items: [
         { label: "Utilisateurs", href: "/admin/users", icon: Users },
         { label: "Départements", href: "/admin/departments", icon: Building2 },
         { label: "Projets", href: "/admin/projects", icon: FolderArchive },
         { label: "Lignes budgétaires", href: "/admin/budget-lines", icon: PiggyBank },
-        { label: "Paramètres", href: "/admin/settings", icon: Settings },
+        { label: "Paramètres workflow", href: "/admin/settings", icon: Settings },
       ],
     },
     {
@@ -205,16 +207,18 @@ const NAV_BY_ROLE: Record<Role, Section[]> = {
 
 const ROLE_TINT: Record<Role, string> = {
   REQUESTER: "from-sky-600 to-sky-800",
-  MANAGER: "from-amber-600 to-amber-800",
+  APPROVER: "from-amber-600 to-amber-800",
   PROCUREMENT: "from-purple-600 to-purple-800",
-  FINANCE: "from-orange-600 to-orange-800",
+  SUPPLIER_MANAGER: "from-rose-600 to-rose-800",
+  RECEIVER: "from-teal-600 to-teal-800",
   AUDITOR: "from-slate-600 to-slate-800",
+  REPORTING: "from-indigo-600 to-indigo-800",
   ADMIN: "from-wwf-600 to-wwf-800",
 };
 
 export function Sidebar({ role }: { role: Role }) {
   const pathname = usePathname();
-  const sections = NAV_BY_ROLE[role];
+  const sections = NAV_BY_ROLE[role] ?? NAV_BY_ROLE.REQUESTER;
   return (
     <aside className="hidden w-64 shrink-0 border-r border-ink-200 bg-gradient-to-b from-white to-ink-50/30 lg:flex lg:flex-col">
       <div className="flex items-center gap-3 border-b border-ink-100 px-5 py-5">

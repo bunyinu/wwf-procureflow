@@ -50,6 +50,7 @@ async function main() {
   );
   const deptByCode = Object.fromEntries(departments.map((d) => [d.code, d]));
 
+  // 8 process-module roles per TDR §4
   const usersInput = [
     {
       fullName: "Christine Mbala",
@@ -59,8 +60,8 @@ async function main() {
     },
     {
       fullName: "Joseph Kabasele",
-      email: "manager@tsc.demo",
-      role: Role.MANAGER,
+      email: "approver@tsc.demo",
+      role: Role.APPROVER,
       departmentId: deptByCode.PRG.id,
     },
     {
@@ -71,15 +72,27 @@ async function main() {
     },
     {
       fullName: "Patrick Lumumba",
-      email: "finance@tsc.demo",
-      role: Role.FINANCE,
-      departmentId: deptByCode.FIN.id,
+      email: "supplier@tsc.demo",
+      role: Role.SUPPLIER_MANAGER,
+      departmentId: deptByCode.LOG.id,
+    },
+    {
+      fullName: "Marie Tshilanda",
+      email: "receiver@tsc.demo",
+      role: Role.RECEIVER,
+      departmentId: deptByCode.LOG.id,
     },
     {
       fullName: "Esther Kasongo",
-      email: "auditor@tsc.demo",
+      email: "audit@tsc.demo",
       role: Role.AUDITOR,
       departmentId: deptByCode.ADM.id,
+    },
+    {
+      fullName: "Léon Mwanza",
+      email: "reporting@tsc.demo",
+      role: Role.REPORTING,
+      departmentId: deptByCode.FIN.id,
     },
     {
       fullName: "Daniel Mukendi",
@@ -99,11 +112,11 @@ async function main() {
 
   await prisma.department.update({
     where: { id: deptByCode.PRG.id },
-    data: { managerUserId: userByEmail["manager@tsc.demo"].id },
+    data: { managerUserId: userByEmail["approver@tsc.demo"].id },
   });
   await prisma.department.update({
     where: { id: deptByCode.LOG.id },
-    data: { managerUserId: userByEmail["manager@tsc.demo"].id },
+    data: { managerUserId: userByEmail["approver@tsc.demo"].id },
   });
 
   const projects = await Promise.all(
@@ -610,7 +623,7 @@ async function main() {
   const approvalsData = [
     {
       reqIdx: 1,
-      approverEmail: "manager@tsc.demo",
+      approverEmail: "approver@tsc.demo",
       role: Role.MANAGER,
       decision: ApprovalDecision.APPROVED,
       comment: "Approbation managériale — campagne validée.",
@@ -619,7 +632,7 @@ async function main() {
     },
     {
       reqIdx: 2,
-      approverEmail: "manager@tsc.demo",
+      approverEmail: "approver@tsc.demo",
       role: Role.MANAGER,
       decision: ApprovalDecision.APPROVED,
       comment: "Mission prioritaire validée.",
@@ -637,7 +650,7 @@ async function main() {
     },
     {
       reqIdx: 3,
-      approverEmail: "manager@tsc.demo",
+      approverEmail: "approver@tsc.demo",
       role: Role.MANAGER,
       decision: ApprovalDecision.APPROVED,
       comment: "Conforme au plan de mise à niveau.",
@@ -655,7 +668,7 @@ async function main() {
     },
     {
       reqIdx: 3,
-      approverEmail: "finance@tsc.demo",
+      approverEmail: "approver@tsc.demo",
       role: Role.FINANCE,
       decision: ApprovalDecision.APPROVED,
       comment: "Budget BL-SI-IT confirmé, engagement validé.",
@@ -664,7 +677,7 @@ async function main() {
     },
     {
       reqIdx: 4,
-      approverEmail: "manager@tsc.demo",
+      approverEmail: "approver@tsc.demo",
       role: Role.MANAGER,
       decision: ApprovalDecision.APPROVED,
       comment: "Maintenance trimestrielle régulière.",
@@ -682,7 +695,7 @@ async function main() {
     },
     {
       reqIdx: 4,
-      approverEmail: "finance@tsc.demo",
+      approverEmail: "approver@tsc.demo",
       role: Role.FINANCE,
       decision: ApprovalDecision.APPROVED,
       comment: "Engagement budgétaire confirmé.",
@@ -691,7 +704,7 @@ async function main() {
     },
     {
       reqIdx: 7,
-      approverEmail: "manager@tsc.demo",
+      approverEmail: "approver@tsc.demo",
       role: Role.MANAGER,
       decision: ApprovalDecision.RETURNED,
       comment:
@@ -701,7 +714,7 @@ async function main() {
     },
     {
       reqIdx: 9,
-      approverEmail: "manager@tsc.demo",
+      approverEmail: "approver@tsc.demo",
       role: Role.MANAGER,
       decision: ApprovalDecision.APPROVED,
       comment: "Approuvé pour exécution immédiate.",
@@ -719,7 +732,7 @@ async function main() {
     },
     {
       reqIdx: 9,
-      approverEmail: "finance@tsc.demo",
+      approverEmail: "approver@tsc.demo",
       role: Role.FINANCE,
       decision: ApprovalDecision.APPROVED,
       comment: "Engagement et paiement effectués.",
@@ -728,7 +741,7 @@ async function main() {
     },
     {
       reqIdx: 10,
-      approverEmail: "finance@tsc.demo",
+      approverEmail: "approver@tsc.demo",
       role: Role.FINANCE,
       decision: ApprovalDecision.REJECTED,
       comment:
@@ -789,7 +802,7 @@ async function main() {
     data: {
       requisitionId: reqRecords[4].id,
       purchaseOrderId: po2.id,
-      receivedById: userByEmail["procurement@tsc.demo"].id,
+      receivedById: userByEmail["receiver@tsc.demo"].id,
       receiptType: ReceiptType.SAN,
       receivedDate: daysAgo(10),
       notes: "Maintenance réalisée conformément au contrat-cadre.",
@@ -800,7 +813,7 @@ async function main() {
     data: {
       requisitionId: reqRecords[9].id,
       purchaseOrderId: po3.id,
-      receivedById: userByEmail["procurement@tsc.demo"].id,
+      receivedById: userByEmail["receiver@tsc.demo"].id,
       receiptType: ReceiptType.GRN,
       receivedDate: daysAgo(30),
       notes: "Mât et émetteur installés, tests d'émission validés.",

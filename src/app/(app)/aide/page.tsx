@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  BarChart3,
   BookOpen,
   CheckCircle2,
   ClipboardList,
@@ -64,7 +65,7 @@ const BY_ROLE: Record<Role, Section[]> = {
       ],
     },
   ],
-  MANAGER: [
+  APPROVER: [
     {
       icon: Inbox,
       title: "Traiter votre file d'approbation",
@@ -109,15 +110,39 @@ const BY_ROLE: Record<Role, Section[]> = {
       ],
     },
   ],
-  FINANCE: [
+  SUPPLIER_MANAGER: [
     {
-      icon: ShieldCheck,
-      title: "Validation budgétaire",
-      body: "Vous voyez les dossiers prêts pour la validation Finance. Vérifiez l'engagement budgétaire, la cohérence avec la ligne, et la disponibilité des fonds.",
+      icon: Truck,
+      title: "Gérer le registre fournisseurs",
+      body: "Tenez le registre à jour : préqualification, diligence raisonnable, attestation Annexe B et performance.",
       steps: [
-        "Examinez la ligne budgétaire et le solde restant",
-        "Identifiez les exceptions budgétaires (badge orange)",
-        "Approuvez pour engager, ou rejetez avec motif documenté",
+        "Créez ou mettez à jour les fiches fournisseurs",
+        "Suivez les vérifications de diligence raisonnable",
+        "Enregistrez la signature de l'Annexe B (anti-corruption)",
+      ],
+    },
+  ],
+  RECEIVER: [
+    {
+      icon: PackageCheck,
+      title: "Constater une réception",
+      body: "Pour les biens : Bon de Réception (GRN). Pour les services : Constat d'Acceptation (SAN).",
+      steps: [
+        "Choisissez le type de réception adapté",
+        "Notez les observations et joignez les pièces si nécessaire",
+        "Cochez « Écart constaté » et décrivez le problème le cas échéant",
+      ],
+    },
+  ],
+  REPORTING: [
+    {
+      icon: BarChart3,
+      title: "Produire les rapports",
+      body: "Tableau de bord exécutif, indicateurs de performance, exports Excel/PDF.",
+      steps: [
+        "Filtrez par projet, statut, période",
+        "Téléchargez les exports CSV",
+        "Imprimez les éditions PDF officielles",
       ],
     },
   ],

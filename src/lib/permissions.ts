@@ -56,7 +56,6 @@ export function can(
         case "create":
           return role === Role.REQUESTER || role === Role.ADMIN;
         case "read":
-          // All authenticated users can read; the UI scopes by relevance.
           return true;
         case "update":
           return (
@@ -78,9 +77,13 @@ export function can(
         case "cancel":
           return role === Role.ADMIN;
         case "close":
-          return role === Role.PROCUREMENT || role === Role.ADMIN;
+          return (
+            role === Role.PROCUREMENT ||
+            role === Role.RECEIVER ||
+            role === Role.ADMIN
+          );
         case "delete":
-          return false; // requisitions are never hard-deleted
+          return false;
       }
       return false;
     }
@@ -94,20 +97,20 @@ export function can(
       if (action === "read") return true;
       if (action === "create" || action === "issuePO")
         return role === Role.PROCUREMENT || role === Role.ADMIN;
-      return false; // POs never deleted; only `CANCELLED` via workflow
+      return false;
     }
 
     case "goodsReceipt": {
       if (action === "read") return true;
       if (action === "create" || action === "receive")
-        return role === Role.PROCUREMENT || role === Role.ADMIN;
-      return false; // receipts append-only
+        return role === Role.RECEIVER || role === Role.ADMIN;
+      return false;
     }
 
     case "supplier": {
       if (action === "read") return true;
       if (action === "create" || action === "update")
-        return role === Role.PROCUREMENT || role === Role.ADMIN;
+        return role === Role.SUPPLIER_MANAGER || role === Role.ADMIN;
       if (action === "delete") return role === Role.ADMIN;
       return false;
     }
@@ -133,8 +136,12 @@ export function can(
     }
 
     case "auditLog": {
-      // Read for Auditor + Admin only. Append-only — no update / delete.
-      return action === "read" && (role === Role.AUDITOR || role === Role.ADMIN);
+      return (
+        action === "read" &&
+        (role === Role.AUDITOR ||
+          role === Role.REPORTING ||
+          role === Role.ADMIN)
+      );
     }
   }
 }
@@ -167,10 +174,12 @@ export type CellVerdict =
 
 const ALL_ROLES: Role[] = [
   Role.REQUESTER,
-  Role.MANAGER,
+  Role.APPROVER,
   Role.PROCUREMENT,
-  Role.FINANCE,
+  Role.SUPPLIER_MANAGER,
+  Role.RECEIVER,
   Role.AUDITOR,
+  Role.REPORTING,
   Role.ADMIN,
 ];
 
@@ -203,10 +212,12 @@ const ACTION_LABEL: Record<Action, string> = {
 
 const ROLE_LABEL: Record<Role, string> = {
   REQUESTER: "Demandeur",
-  MANAGER: "Manager",
+  APPROVER: "Approbateur",
   PROCUREMENT: "Achats",
-  FINANCE: "Finance",
-  AUDITOR: "Auditeur",
+  SUPPLIER_MANAGER: "Fournisseurs",
+  RECEIVER: "Réception",
+  AUDITOR: "Audit",
+  REPORTING: "Reporting",
   ADMIN: "Admin",
 };
 
@@ -227,8 +238,7 @@ const ROWS: RowDef[] = [
     action: "read",
     conditional: {
       REQUESTER: "ses dossiers",
-      MANAGER: "file Manager",
-      FINANCE: "file Finance",
+      APPROVER: "file approbation",
     },
   },
   {
@@ -248,9 +258,8 @@ const ROWS: RowDef[] = [
     entity: "requisition",
     action: "decide",
     conditional: {
-      MANAGER: "étape Manager",
-      PROCUREMENT: "étape Achats",
-      FINANCE: "étape Finance",
+      APPROVER: "étape approbation hiérarchique",
+      PROCUREMENT: "étape classification & analyse offres",
     },
   },
   { entity: "requisition", action: "cancel" },
@@ -320,20 +329,17 @@ function syntheticUser(role: Role): ActorLike {
 }
 
 function syntheticContext(entity: EntityKind, role: Role): CanContext {
-  // Provide a context that lets each role pass when they're meant to.
   if (entity !== "requisition") return {};
-  // For "decide", supply the status that matches the role under test;
-  // for "submit"/"update", treat as a draft owned by the actor.
   return {
     requisition: {
       requesterId: "__matrix-actor__",
       status:
-        role === Role.MANAGER
+        role === Role.APPROVER
           ? "MANAGER_REVIEW"
           : role === Role.PROCUREMENT
             ? "PROCUREMENT_REVIEW"
-            : role === Role.FINANCE
-              ? "FINANCE_REVIEW"
+            : role === Role.RECEIVER
+              ? "PO_CREATED"
               : "DRAFT",
     },
   };

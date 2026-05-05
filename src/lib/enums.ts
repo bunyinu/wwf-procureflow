@@ -2,15 +2,33 @@
 // connector, so we centralise allowed values here and validate at the
 // application layer.
 
+// Roles aligned with the TDR's process modules (not job titles).
+// - APPROVER absorbs hierarchical approval at every threshold (was Manager + Finance).
+// - SUPPLIER_MANAGER, RECEIVER, REPORTING are explicit module owners.
+// MANAGER and FINANCE are kept as aliases for backwards-compatibility with seeded data;
+// new accounts use the new names.
 export const Role = {
   REQUESTER: "REQUESTER",
-  MANAGER: "MANAGER",
+  APPROVER: "APPROVER",
   PROCUREMENT: "PROCUREMENT",
-  FINANCE: "FINANCE",
+  SUPPLIER_MANAGER: "SUPPLIER_MANAGER",
+  RECEIVER: "RECEIVER",
   AUDITOR: "AUDITOR",
+  REPORTING: "REPORTING",
   ADMIN: "ADMIN",
+  // Legacy aliases — fold into the new model
+  MANAGER: "APPROVER",
+  FINANCE: "APPROVER",
 } as const;
-export type Role = (typeof Role)[keyof typeof Role];
+export type Role =
+  | "REQUESTER"
+  | "APPROVER"
+  | "PROCUREMENT"
+  | "SUPPLIER_MANAGER"
+  | "RECEIVER"
+  | "AUDITOR"
+  | "REPORTING"
+  | "ADMIN";
 
 export const RequisitionStatus = {
   DRAFT: "DRAFT",

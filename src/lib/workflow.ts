@@ -30,10 +30,12 @@ export const STATUS_BADGE: Record<RequisitionStatus, string> = {
 
 export const ROLE_LABELS: Record<Role, string> = {
   REQUESTER: "Demandeur",
-  MANAGER: "Manager Approbateur",
+  APPROVER: "Approbateur Hiérarchique",
   PROCUREMENT: "Officier Achats",
-  FINANCE: "Approbateur Finance",
-  AUDITOR: "Auditeur",
+  SUPPLIER_MANAGER: "Gestionnaire Fournisseurs",
+  RECEIVER: "Réceptionnaire",
+  AUDITOR: "Officier Documents & Audit",
+  REPORTING: "Responsable Reporting",
   ADMIN: "Administrateur",
 };
 
@@ -103,14 +105,15 @@ export function nextRoleForStatus(status: RequisitionStatus): Role | null {
   switch (status) {
     case "SUBMITTED":
     case "MANAGER_REVIEW":
-      return "MANAGER";
+      return "APPROVER"; // hierarchical approval (was MANAGER)
     case "PROCUREMENT_REVIEW":
-      return "PROCUREMENT";
+      return "PROCUREMENT"; // classification + offer analysis
     case "FINANCE_REVIEW":
-      return "FINANCE";
+      return "APPROVER"; // budget threshold validation (was FINANCE)
     case "PO_CREATED":
+      return "PROCUREMENT"; // award + emit PO
     case "RECEIVED":
-      return "PROCUREMENT";
+      return "RECEIVER"; // GRN/SAN
     default:
       return null;
   }

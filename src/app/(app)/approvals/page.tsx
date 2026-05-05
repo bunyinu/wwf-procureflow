@@ -12,9 +12,9 @@ import type { Role } from "@/lib/enums";
 export const dynamic = "force-dynamic";
 
 const STATUSES_BY_ROLE: Partial<Record<Role, string[]>> = {
-  MANAGER: ["MANAGER_REVIEW", "SUBMITTED"],
+  // APPROVER absorbs both Manager and Finance hierarchical tiers
+  APPROVER: ["MANAGER_REVIEW", "FINANCE_REVIEW", "SUBMITTED"],
   PROCUREMENT: ["PROCUREMENT_REVIEW"],
-  FINANCE: ["FINANCE_REVIEW"],
   ADMIN: ["MANAGER_REVIEW", "PROCUREMENT_REVIEW", "FINANCE_REVIEW", "SUBMITTED"],
 };
 

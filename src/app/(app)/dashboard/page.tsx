@@ -3,6 +3,7 @@ import {
   Activity,
   AlertTriangle,
   ArrowRight,
+  BarChart3,
   CheckCircle2,
   CircleDollarSign,
   ClipboardList,
@@ -47,25 +48,33 @@ const ROLE_HEADER: Record<Role, { eyebrow: string; description: string }> = {
     eyebrow: "Espace Demandeur",
     description: "Suivez vos demandes, lancez-en de nouvelles, recevez les décisions.",
   },
-  MANAGER: {
-    eyebrow: "Espace Manager",
-    description: "Vos dossiers à approuver et l'activité de votre périmètre.",
+  APPROVER: {
+    eyebrow: "Espace Approbateur Hiérarchique",
+    description: "Vos dossiers à approuver selon les seuils définis.",
   },
   PROCUREMENT: {
     eyebrow: "Espace Achats",
-    description: "Pilotage des fournisseurs, des bons de commande et des réceptions.",
+    description: "Classification des achats, analyse des offres, attribution des marchés.",
   },
-  FINANCE: {
-    eyebrow: "Espace Finance",
-    description: "Validation des engagements et état de la trésorerie.",
+  SUPPLIER_MANAGER: {
+    eyebrow: "Espace Fournisseurs",
+    description: "Registre, préqualification, diligence raisonnable et performance.",
+  },
+  RECEIVER: {
+    eyebrow: "Espace Réception",
+    description: "Constat de réception (GRN) et acceptation de service (SAN).",
   },
   AUDITOR: {
-    eyebrow: "Espace Audit · lecture seule",
-    description: "Vue exhaustive du portefeuille et indicateurs de conformité.",
+    eyebrow: "Espace Documents & Audit",
+    description: "Traçabilité, archivage sécurisé, vue exhaustive en lecture seule.",
+  },
+  REPORTING: {
+    eyebrow: "Espace Reporting",
+    description: "KPIs, indicateurs de performance, exports Excel et PDF.",
   },
   ADMIN: {
     eyebrow: "Console administrateur",
-    description: "Vue exécutive consolidée du portefeuille d'achats.",
+    description: "Vue exécutive consolidée et configuration de la plateforme.",
   },
 };
 
@@ -175,9 +184,13 @@ export default async function DashboardPage() {
         Nouvelle réquisition
       </Link>
     );
-  } else if (role === "MANAGER") {
+  } else if (role === "APPROVER") {
     const myQueue = allReqs.filter(
-      (r) => r.currentApproverRole === "MANAGER" && openStatuses.includes(r.status),
+      (r) =>
+        (r.currentApproverRole === "APPROVER" ||
+          r.currentApproverRole === "MANAGER" ||
+          r.currentApproverRole === "FINANCE") &&
+        openStatuses.includes(r.status),
     );
     const myDecisions = allReqs
       .flatMap((r) => r.approvals)
@@ -242,35 +255,76 @@ export default async function DashboardPage() {
         Ouvrir ma file
       </Link>
     );
-  } else if (role === "FINANCE") {
-    const myQueue = allReqs.filter(
-      (r) => r.currentApproverRole === "FINANCE" && openStatuses.includes(r.status),
-    );
-    const totalEngaged = pos.reduce((s, p) => s + p.amount, 0);
-    const budgetExceptions = allReqs.filter((r) => {
-      const remaining =
-        r.budgetLine.allocatedBudget -
-        r.budgetLine.committedAmount -
-        r.budgetLine.spentAmount;
-      return r.amount > remaining;
-    });
+  } else if (role === "SUPPLIER_MANAGER") {
+    const supTotal = suppliers.length;
+    const supPrequal = suppliers.filter((s) => s.status === "PREQUALIFIED").length;
+    const supPending = suppliers.filter((s) => s.status === "PENDING").length;
+    const supSuspended = suppliers.filter((s) => s.status === "SUSPENDED").length;
+    const dueInReview = suppliers.filter((s) => s.dueDiligenceStatus === "IN_REVIEW").length;
+    const noAttest = suppliers.filter((s) => !s.antiCorruptionSignedAt).length;
     tiles = (
       <>
-        <Stat label="À valider Finance" value={myQueue.length} icon={Inbox} tone={myQueue.length > 0 ? "warn" : "good"} hint="Engagement budgétaire à approuver" />
-        <Stat label="Exceptions budgétaires" value={budgetExceptions.length} icon={AlertTriangle} tone={budgetExceptions.length > 0 ? "warn" : "muted"} hint="Demande > solde restant" />
-        <Stat label="Engagements actifs (PO)" value={formatCurrency(totalEngaged)} icon={Wallet} hint={`${pos.length} bons de commande`} />
-        <Stat label="Cycle moyen" value={avgCycle !== null ? `${avgCycle.toFixed(1)} j` : "—"} icon={Clock} hint="Soumission → clôture" />
-        <Stat label="Respect des SLA" value={slaRespectPct !== null ? `${slaRespectPct} %` : "—"} icon={Gauge} tone={slaRespectPct !== null && slaRespectPct >= 80 ? "good" : "warn"} hint="Étapes dans les délais" />
-        <Stat label="Lignes budgétaires" value={`${departments.length}`} icon={PiggyBank} hint="Voir le grand livre" />
+        <Stat label="Fournisseurs au registre" value={supTotal} icon={Truck} tone="brand" hint={`${supPrequal} préqualifiés`} />
+        <Stat label="Préqualification en attente" value={supPending} icon={Clock} tone={supPending > 0 ? "warn" : "muted"} hint="À traiter" />
+        <Stat label="Diligence en cours" value={dueInReview} icon={ShieldCheck} tone={dueInReview > 0 ? "warn" : "muted"} hint="Vérifications à finaliser" />
+        <Stat label="Annexe B manquante" value={noAttest} icon={AlertTriangle} tone={noAttest > 0 ? "warn" : "good"} hint="Anti-corruption non signée" />
+        <Stat label="Suspendus" value={supSuspended} icon={AlertTriangle} tone={supSuspended > 0 ? "warn" : "muted"} hint="Hors circuit d'attribution" />
+        <Stat label="PO actifs" value={pos.filter((p) => p.status === "ISSUED").length} icon={ClipboardList} hint="Suivi commandes" />
       </>
     );
     primaryAction = (
       <Link
-        href="/finance/budget"
+        href="/suppliers"
         className="inline-flex items-center gap-1.5 rounded-md bg-wwf-700 px-3.5 py-2 text-sm font-medium text-white shadow-soft hover:bg-wwf-800"
       >
-        <PiggyBank className="h-4 w-4" />
-        Ouvrir le grand livre
+        <Truck className="h-4 w-4" />
+        Ouvrir le registre
+      </Link>
+    );
+  } else if (role === "RECEIVER") {
+    const toReceive = allReqs.filter((r) => r.status === "PO_CREATED").length;
+    const received = allReqs.filter((r) => r.status === "RECEIVED").length;
+    const closed = allReqs.filter((r) => r.status === "CLOSED").length;
+    const grnsTotal = pos.filter((p) => p.status === "RECEIVED").length;
+    tiles = (
+      <>
+        <Stat label="À réceptionner" value={toReceive} icon={Inbox} tone={toReceive > 0 ? "warn" : "good"} hint="PO émis en attente" />
+        <Stat label="Réceptions enregistrées" value={received} icon={PackageCheck} tone="good" hint="Dossiers livrés" />
+        <Stat label="Dossiers clôturés" value={closed} icon={ShieldCheck} hint="Cycle complet" />
+        <Stat label="GRN / SAN signés" value={grnsTotal} icon={ClipboardList} hint="PV de réception" />
+        <Stat label="Cycle moyen (clôturées)" value={avgCycle !== null ? `${avgCycle.toFixed(1)} j` : "—"} icon={Clock} hint="Soumission → clôture" />
+        <Stat label="Respect des SLA" value={slaRespectPct !== null ? `${slaRespectPct} %` : "—"} icon={Gauge} tone={slaRespectPct !== null && slaRespectPct >= 80 ? "good" : "warn"} hint="Étapes dans les délais" />
+      </>
+    );
+    primaryAction = (
+      <Link
+        href="/receipts"
+        className="inline-flex items-center gap-1.5 rounded-md bg-wwf-700 px-3.5 py-2 text-sm font-medium text-white shadow-soft hover:bg-wwf-800"
+      >
+        <PackageCheck className="h-4 w-4" />
+        Constater une réception
+      </Link>
+    );
+  } else if (role === "REPORTING") {
+    const totalValue = allReqs.reduce((s, r) => s + r.amount, 0);
+    const totalEngaged = pos.reduce((s, p) => s + p.amount, 0);
+    tiles = (
+      <>
+        <Stat label="Réquisitions totales" value={totalCount} icon={FileText} tone="brand" hint="Tous statuts" />
+        <Stat label="Valeur portefeuille" value={formatCurrency(totalValue)} icon={CircleDollarSign} tone="good" hint="USD" />
+        <Stat label="Cycle moyen" value={avgCycle !== null ? `${avgCycle.toFixed(1)} j` : "—"} icon={Clock} hint="Soumission → clôture" />
+        <Stat label="Respect des SLA" value={slaRespectPct !== null ? `${slaRespectPct} %` : "—"} icon={Gauge} tone={slaRespectPct !== null && slaRespectPct >= 80 ? "good" : "warn"} hint="Étapes dans les délais" />
+        <Stat label="Engagements actifs" value={formatCurrency(totalEngaged)} icon={Wallet} hint={`${pos.length} PO`} />
+        <Stat label="Approbations en retard" value={overdueAll.length} icon={AlertTriangle} tone={overdueAll.length > 0 ? "warn" : "muted"} hint=">3 jours" />
+      </>
+    );
+    primaryAction = (
+      <Link
+        href="/reports"
+        className="inline-flex items-center gap-1.5 rounded-md bg-wwf-700 px-3.5 py-2 text-sm font-medium text-white shadow-soft hover:bg-wwf-800"
+      >
+        <BarChart3 className="h-4 w-4" />
+        Ouvrir les rapports
       </Link>
     );
   } else if (role === "AUDITOR") {
