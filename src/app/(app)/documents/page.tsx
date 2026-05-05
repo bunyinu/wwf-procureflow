@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  Download,
   FileArchive,
   FileText,
   FolderArchive,
@@ -166,6 +167,7 @@ export default async function DocumentsPage({
                     <th className="px-5 py-2.5 font-medium">Déposé par</th>
                     <th className="px-5 py-2.5 font-medium">Taille</th>
                     <th className="px-5 py-2.5 font-medium">Date</th>
+                    <th className="px-5 py-2.5 font-medium text-right">PDF</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -175,12 +177,16 @@ export default async function DocumentsPage({
                       className="border-b border-ink-50 transition hover:bg-ink-50/60"
                     >
                       <td className="px-5 py-3">
-                        <div className="flex items-center gap-2">
+                        <Link
+                          href={`/print/requisition/${d.requisitionId}`}
+                          target="_blank"
+                          className="flex items-center gap-2"
+                        >
                           <FileText className="h-4 w-4 text-ink-400" />
-                          <span className="font-medium text-ink-800">
+                          <span className="font-medium text-ink-800 hover:text-wwf-700">
                             {d.fileName}
                           </span>
-                        </div>
+                        </Link>
                       </td>
                       <td className="px-5 py-3">
                         <Badge className="bg-ink-100 text-ink-700">
@@ -208,6 +214,16 @@ export default async function DocumentsPage({
                       </td>
                       <td className="px-5 py-3 text-xs text-ink-500">
                         {formatDate(d.uploadedAt)}
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <Link
+                          href={`/print/requisition/${d.requisitionId}`}
+                          target="_blank"
+                          className="inline-flex items-center gap-1 rounded-md border border-ink-200 px-2 py-1 text-[11px] font-medium text-ink-700 hover:bg-ink-50"
+                        >
+                          <Download className="h-3 w-3" />
+                          Édition PDF
+                        </Link>
                       </td>
                     </tr>
                   ))}

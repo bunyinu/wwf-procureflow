@@ -87,4 +87,20 @@ h1, h2, h3, h4 {
     box-shadow: none !important;
     border: none !important;
   }
+  /* Force browser to keep background colors / gradients in the PDF.
+     Without this, Chrome/Safari/Firefox strip backgrounds by default and
+     the PDF looks unstyled compared to the on-screen preview. */
+  .pdf-page,
+  .pdf-page * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+}
+
+/* Apply on screen too so preview matches PDF exactly */
+.pdf-page,
+.pdf-page * {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }

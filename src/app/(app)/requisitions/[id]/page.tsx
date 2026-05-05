@@ -606,7 +606,7 @@ export default async function RequisitionDetail({
           <Card>
             <CardHeader title="Documents" />
             <CardBody className="space-y-3">
-              <AttachmentsZone />
+              <AttachmentsZone requisitionId={req.id} />
               {req.documents.length === 0 ? (
                 <p className="text-xs text-ink-500">
                   Aucun document associé pour le moment.
