@@ -78,6 +78,7 @@ const NAV_BY_ROLE: Record<Role, Section[]> = {
       title: "Espace Achats",
       items: [
         { label: "Tableau de bord", href: "/dashboard", icon: LayoutDashboard },
+        { label: "Workspace Achats", href: "/procurement", icon: ClipboardList },
         { label: "File classification", href: "/approvals", icon: Inbox },
         { label: "Réquisitions", href: "/requisitions", icon: FileText },
         { label: "Bons de commande", href: "/purchase-orders", icon: ClipboardList },
@@ -175,6 +176,7 @@ const NAV_BY_ROLE: Record<Role, Section[]> = {
     {
       title: "Achats (oversight)",
       items: [
+        { label: "Workspace Achats", href: "/procurement", icon: ClipboardList },
         { label: "Fournisseurs", href: "/suppliers", icon: Truck },
         { label: "Bons de commande", href: "/purchase-orders", icon: ClipboardList },
         { label: "Réceptions", href: "/receipts", icon: PackageCheck },
