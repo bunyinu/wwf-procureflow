@@ -11,9 +11,9 @@ import {
 const PALETTE: Record<string, string> = {
   DRAFT: "#94a3b8",
   SUBMITTED: "#3b82f6",
-  MANAGER_REVIEW: "#f59e0b",
+  HIERARCHICAL_REVIEW: "#f59e0b",
   PROCUREMENT_REVIEW: "#a855f7",
-  FINANCE_REVIEW: "#fb923c",
+  THRESHOLD_REVIEW: "#fb923c",
   PO_CREATED: "#6366f1",
   RECEIVED: "#14b8a6",
   CLOSED: "#10b981",

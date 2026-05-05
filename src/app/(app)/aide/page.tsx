@@ -69,7 +69,7 @@ const BY_ROLE: Record<Role, Section[]> = {
     {
       icon: Inbox,
       title: "Traiter votre file d'approbation",
-      body: "L'onglet « File d'approbation » regroupe les dossiers en attente de votre validation managériale, triés par priorité puis par ancienneté.",
+      body: "L'onglet « File d'approbation » regroupe les dossiers en attente de votre validation hiérarchique, triés par priorité puis par ancienneté.",
       steps: [
         "Examinez les informations clés et la justification",
         "Vérifiez la cohérence avec la ligne budgétaire",
@@ -92,7 +92,7 @@ const BY_ROLE: Record<Role, Section[]> = {
     {
       icon: ClipboardList,
       title: "Émettre un bon de commande",
-      body: "Une fois la réquisition validée par la Finance, sélectionnez le fournisseur retenu et émettez le bon de commande. Le PO est numéroté automatiquement et lié à la réquisition.",
+      body: "Une fois la réquisition validée par le seuil hiérarchique, sélectionnez le fournisseur retenu et émettez le bon de commande. Le PO est numéroté automatiquement et lié à la réquisition.",
       steps: [
         "Ouvrez la réquisition au statut « BC émis »",
         "Sélectionnez le fournisseur retenu (issu de l'analyse des offres)",

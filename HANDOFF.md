@@ -46,9 +46,9 @@ Aligned strictly to TDR §4 modules (not job titles). FINANCE is intentionally a
 ```
 DRAFT
  → SUBMITTED                 (Demandeur)
- → MANAGER_REVIEW            (Approbateur hiérarchique · tier 1)
+ → HIERARCHICAL_REVIEW            (Approbateur hiérarchique · tier 1)
  → PROCUREMENT_REVIEW        (Achats · classification + méthode PDF + analyse offres)
- → FINANCE_REVIEW            (Approbateur hiérarchique · seuil renforcé si requis)
+ → THRESHOLD_REVIEW            (Approbateur hiérarchique · seuil renforcé si requis)
  → PO_CREATED                (Achats · attribution + émission PO)
  → RECEIVED                  (Réceptionnaire · GRN/SAN)
  → CLOSED                    (Achats)
@@ -128,7 +128,7 @@ src/
 │   │   │   ├── projects/           # CRUD projets
 │   │   │   ├── budget-lines/       # CRUD lignes budgétaires
 │   │   │   └── settings/           # Seuils, SLA, matrice droits
-│   │   ├── finance/                # Pages legacy (budget, cashflow) — encore accessibles
+│   │   ├── finance/                # Compatibilité URL: redirige vers /workspaces/reporting
 │   │   └── print/                  # 5 PDFs premium
 │   │       ├── po/[id]/            # Bon de commande
 │   │       ├── requisition/[id]/   # Réquisition
@@ -368,7 +368,7 @@ Par ordre de valeur :
 
 ## 12. Anomalies / dette technique connues
 
-- **`/finance/budget` et `/finance/cashflow`** : pages héritées de la période où Finance était un rôle distinct. Elles sont désormais accessibles au rôle Reporting uniquement, hors sidebar principale. À supprimer ou fusionner dans `/workspaces/reporting` si elles deviennent redondantes.
+- **`/finance/budget` et `/finance/cashflow`** : compatibilité URL seulement; ces routes exigent le rôle Reporting et redirigent vers `/workspaces/reporting`. Elles ne sont plus des workspaces ni des rôles séparés.
 - **Cross-region DB** : la DB `appeal-control-db` (paid, Virginia) est connectée à `wwf-procureflow.onrender.com` (Frankfurt) via SSL externe. La connexion fonctionne mais la latence est ~150ms par requête. Le déploiement utilise actuellement `soko-db` (free, même région) qui est plus rapide.
 - **Build SSR + next/font** : le build Render fait des requêtes externes vers `fonts.googleapis.com`. Si le réseau Render bloque temporairement, le build retry 3× puis utilise les fallbacks système. Pas bloquant en pratique.
 - **`prisma db push` au build** : non destructif sauf en cas de changement schema incompatible. Le seed clear+reseed à chaque deploy. À retirer pour la prod (utiliser `migrate deploy`).

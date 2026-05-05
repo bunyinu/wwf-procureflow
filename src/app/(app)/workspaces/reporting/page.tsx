@@ -33,7 +33,7 @@ export default async function ReportingWorkspacePage() {
     return acc;
   }, {});
   const methodChart = Object.entries(byMethod).map(([name, value]) => ({ name: PROCUREMENT_TYPE_LABEL[name as ProcurementType] ?? name, value }));
-  const lateRequests = requisitions.filter((request) => ["MANAGER_REVIEW", "PROCUREMENT_REVIEW", "FINANCE_REVIEW"].includes(request.status) && request.submittedAt && request.submittedAt.getTime() < Date.now() - 3 * 86400000);
+  const lateRequests = requisitions.filter((request) => ["HIERARCHICAL_REVIEW", "PROCUREMENT_REVIEW", "THRESHOLD_REVIEW"].includes(request.status) && request.submittedAt && request.submittedAt.getTime() < Date.now() - 3 * 86400000);
   const closedCycles = requisitions.filter((request) => request.status === "CLOSED" && request.submittedAt).map((request) => (request.updatedAt.getTime() - request.submittedAt!.getTime()) / 86400000);
   const avgDelay = closedCycles.length ? closedCycles.reduce((a, b) => a + b, 0) / closedCycles.length : 0;
   const totalValue = requisitions.reduce((sum, request) => sum + request.amount, 0);

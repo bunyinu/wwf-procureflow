@@ -28,7 +28,7 @@ export async function getNotificationsFor(user: {
       where: {
         currentApproverRole: role,
         status: {
-          in: ["MANAGER_REVIEW", "PROCUREMENT_REVIEW", "FINANCE_REVIEW"],
+          in: ["HIERARCHICAL_REVIEW", "PROCUREMENT_REVIEW", "THRESHOLD_REVIEW"],
         },
       },
       orderBy: [{ priority: "desc" }, { submittedAt: "asc" }],

@@ -37,7 +37,7 @@ export default async function PrintableBudget() {
     <PrintShell
       documentLabel="État de Consommation Budgétaire"
       documentNumber={`BDG-${generated.toISOString().slice(0, 10)}`}
-      classification="Officiel · Restitution Finance"
+      classification="Officiel · Restitution Reporting"
     >
       <div className="mb-6 flex items-end justify-between">
         <div>
@@ -168,7 +168,7 @@ export default async function PrintableBudget() {
       </div>
 
       <div className="mt-8 rounded-sm border border-gold-300/70 bg-gold-50/50 p-4 text-[11px] text-ink-800">
-        <strong>Note de l&apos;Approbateur Finance :</strong> les chiffres
+        <strong>Note de l&apos;Approbateur hiérarchique :</strong> les chiffres
         ci-dessus reflètent l&apos;état du système au moment de l&apos;édition
         et peuvent évoluer suite aux décisions en cours. Les lignes au
         dépassement (&gt; 100 %) doivent faire l&apos;objet d&apos;une
@@ -177,7 +177,7 @@ export default async function PrintableBudget() {
 
       <PdfSignatureBlock
         signatures={[
-          { role: "Approbateur Finance", line: "Signature & cachet" },
+          { role: "Approbateur hiérarchique", line: "Signature & cachet" },
           { role: "Contrôleur de Gestion", line: "Visa de cohérence" },
           { role: "Direction Nationale", line: "Pour information" },
         ]}

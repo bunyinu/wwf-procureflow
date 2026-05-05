@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { ProcurementType, Role } from "../src/lib/enums";
 import { can } from "../src/lib/permissions";
 import {
@@ -21,6 +22,23 @@ const roles = [
   Role.ADMIN,
 ] as const;
 
+assert.deepEqual(
+  Object.keys(Role),
+  [
+    "REQUESTER",
+    "APPROVER",
+    "PROCUREMENT",
+    "SUPPLIER_MANAGER",
+    "RECEIVER",
+    "AUDITOR",
+    "REPORTING",
+    "ADMIN",
+  ],
+  "Role registry must contain exactly the 8 workspace roles and no legacy aliases",
+);
+assert.equal(Object.values(Role).includes("MANAGER" as never), false, "MANAGER must not exist as a role");
+assert.equal(Object.values(Role).includes("FINANCE" as never), false, "FINANCE must not exist as a role");
+
 assert.equal(WORKSPACES.length, 8, "must expose exactly 8 workspaces");
 assert.deepEqual(
   WORKSPACES.map((workspace) => workspace.role),
@@ -32,6 +50,82 @@ assert.equal(new Set(WORKSPACES.map((workspace) => workspace.path)).size, 8, "wo
 for (const role of roles) {
   assert.equal(WORKSPACE_BY_ROLE[role].role, role, `workspace missing for ${role}`);
   assert.equal(workspaceHomeForRole(role), WORKSPACE_BY_ROLE[role].path, `home route mismatch for ${role}`);
+}
+
+const exactWorkspaceContract = [
+  {
+    role: Role.REQUESTER,
+    title: "Requester Workspace",
+    layout: ["Left: New Requisition form", "Right: status timeline", "Bottom: My requests table"],
+    mustShow: ["Department", "Project", "Description", "Quantity", "Budget", "Budget line", "Attachments", "Auto-generated requisition number"],
+    actions: ["Save draft", "Submit", "Upload justification", "Edit only if draft/returned"],
+    noAccess: ["Supplier selection", "Offer analysis", "Approval buttons"],
+  },
+  {
+    role: Role.APPROVER,
+    title: "Hierarchical Approver Workspace",
+    layout: ["Top: approval queue cards", "Center: selected request details", "Right: decision panel", "Bottom: decision history"],
+    mustShow: ["Requester", "Department/project", "Budget + budget line", "Attachments", "Threshold level", "Previous decisions"],
+    actions: ["Approve", "Reject", "Request correction", "Escalate to next approver if threshold requires"],
+    noAccess: ["Editing request content", "Supplier management", "Reception/GRN"],
+  },
+  {
+    role: Role.PROCUREMENT,
+    title: "Procurement Officer Workspace",
+    layout: ["Top: approved requests waiting procurement", "Center: procurement method selector", "Right: process checklist", "Bottom: offer analysis / award panel"],
+    mustShow: ["Achat direct", "Fournisseur préqualifié", "Cotations multiples", "Appel d’offres", "Source unique"],
+    actions: ["Choose procurement method", "Define steps/responsibilities", "Launch sourcing/RFQ/tender", "Analyze offers", "Award supplier", "Track order"],
+    noAccess: ["Business approval", "GRN/SAN validation", "User permissions"],
+  },
+  {
+    role: Role.SUPPLIER_MANAGER,
+    title: "Supplier Manager Workspace",
+    layout: ["Left: supplier list", "Center: supplier profile", "Right: due diligence checklist", "Bottom: linked requests/orders"],
+    mustShow: ["Supplier status", "Prequalification status", "Due diligence docs", "Supplier history", "Orders linked to supplier"],
+    actions: ["Add/update supplier profile", "Prequalify supplier", "Upload due diligence documents", "Mark supplier approved/blocked/pending"],
+    noAccess: ["Approving requisitions", "Awarding markets alone", "Closing delivery"],
+  },
+  {
+    role: Role.RECEIVER,
+    title: "Receiver Workspace",
+    layout: ["Top: pending receptions", "Center: order/request details", "Right: GRN/SAN form", "Bottom: observations + attachments"],
+    mustShow: ["Supplier", "Ordered goods/services", "Quantity", "PO/order reference", "Expected delivery", "Attached documents"],
+    actions: ["Create GRN", "Create Service Acceptance Note", "Validate delivery/service", "Add observations", "Upload proof", "Flag discrepancy"],
+    noAccess: ["Supplier selection", "Approval chain", "Original budget modification"],
+  },
+  {
+    role: Role.AUDITOR,
+    title: "Archive & Audit Workspace",
+    layout: ["Top: global search", "Left: filters by request/status/date/user", "Center: document/results table", "Right: immutable audit timeline"],
+    mustShow: ["Every action", "Who did it", "When", "Decision/comment", "Attached files", "Access history"],
+    actions: ["Search documents", "View full timeline", "Export audit pack", "Review access logs"],
+    noAccess: ["Editing records", "Deleting audit history", "Approving anything"],
+  },
+  {
+    role: Role.REPORTING,
+    title: "Reporting Workspace",
+    layout: ["Top: KPI cards", "Center: charts", "Right: bottleneck/late-stage panel", "Bottom: exportable report table"],
+    mustShow: ["Requisitions by status", "Processing delays", "Late requests", "Procurement method split", "Supplier/order performance", "Excel/PDF export"],
+    actions: ["Filter reports", "Export Excel", "Export PDF", "View bottlenecks"],
+    noAccess: ["Workflow actions", "User permission changes"],
+  },
+  {
+    role: Role.ADMIN,
+    title: "Admin Workspace",
+    layout: ["Left: admin menu", "Center: selected config table", "Right: permission/rule editor"],
+    mustShow: ["Users", "Roles", "Access rights", "Departments", "Projects", "Budget lines", "Approval thresholds", "Workflow rules"],
+    actions: ["Create users", "Assign roles", "Configure permissions", "Configure thresholds", "Manage departments/projects/budget lines"],
+    noAccess: ["Deleting immutable audit history", "Secretly changing completed records"],
+  },
+] as const;
+
+for (const expected of exactWorkspaceContract) {
+  const actual = WORKSPACE_BY_ROLE[expected.role];
+  assert.equal(actual.title, expected.title, `${expected.role} title mismatch`);
+  assert.deepEqual(actual.layout, [...expected.layout], `${expected.role} layout mismatch`);
+  assert.deepEqual(actual.mustShow, [...expected.mustShow], `${expected.role} mustShow mismatch`);
+  assert.deepEqual(actual.actions, [...expected.actions], `${expected.role} actions mismatch`);
+  assert.deepEqual(actual.noAccess, [...expected.noAccess], `${expected.role} noAccess mismatch`);
 }
 
 assert.deepEqual(
@@ -61,7 +155,7 @@ assert.equal(can(actor(Role.REQUESTER), "update", "requisition", ownReturned), t
 assert.equal(can(actor(Role.REQUESTER), "decide", "requisition", procurementReview), false, "requester never sees approval buttons");
 assert.equal(can(actor(Role.REQUESTER), "create", "supplier"), false, "requester has no supplier selection/management");
 
-assert.equal(can(actor(Role.APPROVER), "decide", "requisition", { requisition: { requesterId: "requester-id", status: "MANAGER_REVIEW" } }), true, "approver handles hierarchical queue");
+assert.equal(can(actor(Role.APPROVER), "decide", "requisition", { requisition: { requesterId: "requester-id", status: "HIERARCHICAL_REVIEW" } }), true, "approver handles hierarchical queue");
 assert.equal(can(actor(Role.APPROVER), "update", "requisition", ownDraft), false, "approver cannot edit request content");
 assert.equal(can(actor(Role.APPROVER), "create", "goodsReceipt"), false, "approver has no GRN/SAN access");
 
@@ -107,5 +201,9 @@ assert.deepEqual(
   ],
   "interconnection sequence must match the required process",
 );
+
+const seedSource = readFileSync("prisma/seed.ts", "utf8");
+assert.equal(seedSource.includes("Role.MANAGER"), false, "seed must not create legacy manager role entries");
+assert.equal(seedSource.includes("Role.FINANCE"), false, "seed must not create legacy finance role entries");
 
 console.log("workspace-contract-ok");

@@ -43,14 +43,14 @@ const SETTINGS_LAYOUT: Array<{
     description:
       "Délai indicatif par étape pour identifier les approbations en retard.",
     fields: [
-      { id: "sla.managerReviewDays", label: "Revue hiérarchique", type: "number", suffix: "j" },
+      { id: "sla.hierarchicalReviewDays", label: "Revue hiérarchique", type: "number", suffix: "j" },
       {
         id: "sla.procurementReviewDays",
         label: "Revue Achats",
         type: "number",
         suffix: "j",
       },
-      { id: "sla.financeReviewDays", label: "Revue seuil renforcé", type: "number", suffix: "j" },
+      { id: "sla.thresholdReviewDays", label: "Revue seuil renforcé", type: "number", suffix: "j" },
     ],
   },
 ];

@@ -3,9 +3,9 @@ import { Role, RequisitionStatus } from "@/lib/enums";
 export const STATUS_LABELS: Record<RequisitionStatus, string> = {
   DRAFT: "Brouillon",
   SUBMITTED: "Soumise",
-  MANAGER_REVIEW: "Revue hiérarchique",
+  HIERARCHICAL_REVIEW: "Revue hiérarchique",
   PROCUREMENT_REVIEW: "Revue Achats",
-  FINANCE_REVIEW: "Revue seuil renforcé",
+  THRESHOLD_REVIEW: "Revue seuil renforcé",
   PO_CREATED: "BC émis",
   RECEIVED: "Reçue",
   CLOSED: "Clôturée",
@@ -17,9 +17,9 @@ export const STATUS_LABELS: Record<RequisitionStatus, string> = {
 export const STATUS_BADGE: Record<RequisitionStatus, string> = {
   DRAFT: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
   SUBMITTED: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
-  MANAGER_REVIEW: "bg-amber-50 text-amber-800 ring-1 ring-amber-200",
+  HIERARCHICAL_REVIEW: "bg-amber-50 text-amber-800 ring-1 ring-amber-200",
   PROCUREMENT_REVIEW: "bg-purple-50 text-purple-700 ring-1 ring-purple-200",
-  FINANCE_REVIEW: "bg-orange-50 text-orange-700 ring-1 ring-orange-200",
+  THRESHOLD_REVIEW: "bg-orange-50 text-orange-700 ring-1 ring-orange-200",
   PO_CREATED: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200",
   RECEIVED: "bg-teal-50 text-teal-700 ring-1 ring-teal-200",
   CLOSED: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
@@ -41,12 +41,12 @@ export const ROLE_LABELS: Record<Role, string> = {
 
 export const TRANSITIONS: Partial<Record<RequisitionStatus, RequisitionStatus[]>> = {
   DRAFT: ["SUBMITTED"],
-  SUBMITTED: ["MANAGER_REVIEW"],
-  MANAGER_REVIEW: ["PROCUREMENT_REVIEW", "REJECTED", "RETURNED_FOR_REVISION"],
+  SUBMITTED: ["HIERARCHICAL_REVIEW"],
+  HIERARCHICAL_REVIEW: ["PROCUREMENT_REVIEW", "REJECTED", "RETURNED_FOR_REVISION"],
   RETURNED_FOR_REVISION: ["DRAFT", "SUBMITTED"],
   // Any reviewer (hierarchical approver or procurement) can return for revision.
-  PROCUREMENT_REVIEW: ["FINANCE_REVIEW", "PO_CREATED", "REJECTED", "RETURNED_FOR_REVISION"],
-  FINANCE_REVIEW: ["PO_CREATED", "REJECTED", "RETURNED_FOR_REVISION"],
+  PROCUREMENT_REVIEW: ["THRESHOLD_REVIEW", "PO_CREATED", "REJECTED", "RETURNED_FOR_REVISION"],
+  THRESHOLD_REVIEW: ["PO_CREATED", "REJECTED", "RETURNED_FOR_REVISION"],
   PO_CREATED: ["RECEIVED"],
   RECEIVED: ["CLOSED"],
 };
@@ -104,11 +104,11 @@ export function approvalTier(amountUSD: number): {
 export function nextRoleForStatus(status: RequisitionStatus): Role | null {
   switch (status) {
     case "SUBMITTED":
-    case "MANAGER_REVIEW":
+    case "HIERARCHICAL_REVIEW":
       return "APPROVER"; // hierarchical approval
     case "PROCUREMENT_REVIEW":
       return "PROCUREMENT"; // classification + offer analysis
-    case "FINANCE_REVIEW":
+    case "THRESHOLD_REVIEW":
       return "APPROVER"; // enhanced threshold validation
     case "PO_CREATED":
       return "PROCUREMENT"; // award + emit PO
@@ -122,9 +122,9 @@ export function nextRoleForStatus(status: RequisitionStatus): Role | null {
 export const TIMELINE_STEPS: RequisitionStatus[] = [
   "DRAFT",
   "SUBMITTED",
-  "MANAGER_REVIEW",
+  "HIERARCHICAL_REVIEW",
   "PROCUREMENT_REVIEW",
-  "FINANCE_REVIEW",
+  "THRESHOLD_REVIEW",
   "PO_CREATED",
   "RECEIVED",
   "CLOSED",

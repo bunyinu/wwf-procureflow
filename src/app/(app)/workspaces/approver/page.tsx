@@ -18,7 +18,7 @@ export default async function ApproverWorkspacePage() {
   const workspace = WORKSPACE_BY_ROLE.APPROVER;
   const [queue, history] = await Promise.all([
     prisma.purchaseRequisition.findMany({
-      where: { status: { in: ["MANAGER_REVIEW", "FINANCE_REVIEW", "SUBMITTED"] } },
+      where: { status: { in: ["HIERARCHICAL_REVIEW", "THRESHOLD_REVIEW", "SUBMITTED"] } },
       include: {
         requester: true,
         department: true,

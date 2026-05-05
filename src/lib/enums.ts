@@ -2,11 +2,9 @@
 // connector, so we centralise allowed values here and validate at the
 // application layer.
 
-// Roles aligned with the TDR's process modules (not job titles).
-// - APPROVER absorbs hierarchical approval at every threshold (was Manager + Finance).
-// - SUPPLIER_MANAGER, RECEIVER, REPORTING are explicit module owners.
-// MANAGER and FINANCE are kept as aliases for backwards-compatibility with seeded data;
-// new accounts use the new names.
+// Roles aligned exactly with the 8 requested workspaces.
+// Do not add job-title aliases: threshold validation belongs to the
+// Hierarchical Approver workspace, not to a separate role.
 export const Role = {
   REQUESTER: "REQUESTER",
   APPROVER: "APPROVER",
@@ -16,9 +14,6 @@ export const Role = {
   AUDITOR: "AUDITOR",
   REPORTING: "REPORTING",
   ADMIN: "ADMIN",
-  // Legacy aliases — fold into the new model
-  MANAGER: "APPROVER",
-  FINANCE: "APPROVER",
 } as const;
 export type Role =
   | "REQUESTER"
@@ -33,9 +28,9 @@ export type Role =
 export const RequisitionStatus = {
   DRAFT: "DRAFT",
   SUBMITTED: "SUBMITTED",
-  MANAGER_REVIEW: "MANAGER_REVIEW",
+  HIERARCHICAL_REVIEW: "HIERARCHICAL_REVIEW",
   PROCUREMENT_REVIEW: "PROCUREMENT_REVIEW",
-  FINANCE_REVIEW: "FINANCE_REVIEW",
+  THRESHOLD_REVIEW: "THRESHOLD_REVIEW",
   PO_CREATED: "PO_CREATED",
   RECEIVED: "RECEIVED",
   CLOSED: "CLOSED",

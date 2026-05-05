@@ -208,7 +208,7 @@ export default async function PrintableRequisition({
       <PdfSignatureBlock
         signatures={[
           { role: "Demandeur", line: "Signature de l'émetteur" },
-          { role: "Manager", line: "Visa hiérarchique" },
+          { role: "Approbateur hiérarchique", line: "Visa hiérarchique" },
           { role: "Achats", line: "Pour conformité procédure" },
         ]}
       />

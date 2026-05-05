@@ -343,7 +343,7 @@ function syntheticContext(entity: EntityKind, role: Role): CanContext {
       requesterId: "__matrix-actor__",
       status:
         role === Role.APPROVER
-          ? "MANAGER_REVIEW"
+          ? "HIERARCHICAL_REVIEW"
           : role === Role.PROCUREMENT
             ? "PROCUREMENT_REVIEW"
             : role === Role.RECEIVER

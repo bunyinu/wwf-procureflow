@@ -20,9 +20,9 @@ export type ApprovalLike = {
 };
 
 const DEFAULT_SLA_DAYS: Partial<Record<RequisitionStatus, number>> = {
-  MANAGER_REVIEW: 2,
+  HIERARCHICAL_REVIEW: 2,
   PROCUREMENT_REVIEW: 3,
-  FINANCE_REVIEW: 2,
+  THRESHOLD_REVIEW: 2,
 };
 
 export function computeStageTimings(input: {

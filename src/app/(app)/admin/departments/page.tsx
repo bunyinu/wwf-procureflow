@@ -24,7 +24,7 @@ export default async function AdminDepartmentsPage({
       orderBy: { name: "asc" },
     }),
     prisma.user.findMany({
-      where: { role: { in: ["MANAGER", "ADMIN"] } },
+      where: { role: { in: ["APPROVER", "ADMIN"] } },
       orderBy: { fullName: "asc" },
     }),
   ]);
@@ -46,7 +46,7 @@ export default async function AdminDepartmentsPage({
           Départements
         </h1>
         <p className="text-sm text-ink-500">
-          Création, modification et affectation des managers responsables.
+          Création, modification et affectation des responsables hiérarchiques.
         </p>
       </div>
 

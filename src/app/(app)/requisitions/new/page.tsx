@@ -37,7 +37,7 @@ export default async function NewRequisitionPage({
         </h1>
         <p className="text-sm text-ink-500">
           Renseignez les informations ci-dessous. Vous pouvez sauvegarder en
-          brouillon ou soumettre directement à la validation managériale.
+          brouillon ou soumettre directement à la validation hiérarchique.
         </p>
       </div>
 

@@ -81,7 +81,7 @@ export async function createRequisitionAction(formData: FormData) {
   const reqNum = await nextRequisitionNumber();
 
   const status = submit
-    ? RequisitionStatus.MANAGER_REVIEW
+    ? RequisitionStatus.HIERARCHICAL_REVIEW
     : RequisitionStatus.DRAFT;
   const created = await prisma.purchaseRequisition.create({
     data: {
@@ -100,7 +100,7 @@ export async function createRequisitionAction(formData: FormData) {
       priority: parsed.priority,
       justification: parsed.justification,
       status,
-      currentApproverRole: submit ? Role.MANAGER : null,
+      currentApproverRole: submit ? Role.APPROVER : null,
       submittedAt: submit ? new Date() : null,
       expectedDeliveryDate: parsed.expectedDeliveryDate
         ? new Date(parsed.expectedDeliveryDate)
@@ -116,7 +116,7 @@ export async function createRequisitionAction(formData: FormData) {
     entityId: created.id,
     newValue: created.requisitionNumber,
     comment: submit
-      ? `Soumission directe pour validation managériale`
+      ? `Soumission directe pour validation hiérarchique`
       : `Création en brouillon`,
   });
 
@@ -148,9 +148,9 @@ export async function submitRequisitionAction(formData: FormData) {
   await prisma.purchaseRequisition.update({
     where: { id },
     data: {
-      status: RequisitionStatus.MANAGER_REVIEW,
+      status: RequisitionStatus.HIERARCHICAL_REVIEW,
       submittedAt: new Date(),
-      currentApproverRole: Role.MANAGER,
+      currentApproverRole: Role.APPROVER,
     },
   });
   await logAudit({
@@ -160,7 +160,7 @@ export async function submitRequisitionAction(formData: FormData) {
     entityType: "PurchaseRequisition",
     entityId: id,
     oldValue: req!.status,
-    newValue: RequisitionStatus.MANAGER_REVIEW,
+    newValue: RequisitionStatus.HIERARCHICAL_REVIEW,
   });
   revalidatePath(`/requisitions/${id}`);
   revalidatePath("/requisitions");
@@ -272,25 +272,25 @@ export async function decideAction(formData: FormData) {
 
   let newStatus: RequisitionStatus | null = null;
   if (parsed.decision === ApprovalDecision.APPROVED) {
-    if (fromStatus === RequisitionStatus.MANAGER_REVIEW) {
+    if (fromStatus === RequisitionStatus.HIERARCHICAL_REVIEW) {
       newStatus = RequisitionStatus.PROCUREMENT_REVIEW;
     } else if (fromStatus === RequisitionStatus.PROCUREMENT_REVIEW) {
       if (req!.procurementType === ProcurementType.UNCLASSIFIED) {
         redirect(`/requisitions/${parsed.id}?error=procurement_method_required`);
       }
       newStatus = approvalTier(req!.amount).needsEnhancedThresholdApproval
-        ? RequisitionStatus.FINANCE_REVIEW
+        ? RequisitionStatus.THRESHOLD_REVIEW
         : RequisitionStatus.PO_CREATED;
-    } else if (fromStatus === RequisitionStatus.FINANCE_REVIEW) {
+    } else if (fromStatus === RequisitionStatus.THRESHOLD_REVIEW) {
       newStatus = RequisitionStatus.PO_CREATED;
     }
   } else if (parsed.decision === ApprovalDecision.REJECTED) {
     newStatus = RequisitionStatus.REJECTED;
   } else if (parsed.decision === ApprovalDecision.RETURNED) {
     if (
-      fromStatus === RequisitionStatus.MANAGER_REVIEW ||
+      fromStatus === RequisitionStatus.HIERARCHICAL_REVIEW ||
       fromStatus === RequisitionStatus.PROCUREMENT_REVIEW ||
-      fromStatus === RequisitionStatus.FINANCE_REVIEW
+      fromStatus === RequisitionStatus.THRESHOLD_REVIEW
     ) {
       newStatus = RequisitionStatus.RETURNED_FOR_REVISION;
     } else {
@@ -326,7 +326,7 @@ export async function decideAction(formData: FormData) {
 
   const isBudgetException =
     parsed.budgetException === "on" &&
-    fromStatus === RequisitionStatus.FINANCE_REVIEW &&
+    fromStatus === RequisitionStatus.THRESHOLD_REVIEW &&
     parsed.decision === ApprovalDecision.RETURNED;
   await logAudit({
     actorId: user.id,

@@ -113,9 +113,9 @@ export default async function RequisitionDetail({
     expectedRole !== null &&
     user.role === expectedRole &&
     [
-      "MANAGER_REVIEW",
+      "HIERARCHICAL_REVIEW",
       "PROCUREMENT_REVIEW",
-      "FINANCE_REVIEW",
+      "THRESHOLD_REVIEW",
     ].includes(req.status);
 
   const canSubmit =
@@ -312,7 +312,7 @@ export default async function RequisitionDetail({
                     placeholder="Commentaire — obligatoire en cas de rejet ou de retour pour révision."
                     className="w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm focus:border-wwf-500 focus:ring-2 focus:ring-wwf-200"
                   />
-                  {req.status === "FINANCE_REVIEW" ? (
+                  {req.status === "THRESHOLD_REVIEW" ? (
                     <label className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50/40 px-3 py-2 text-xs text-amber-900">
                       <input
                         type="checkbox"
@@ -332,9 +332,9 @@ export default async function RequisitionDetail({
                     >
                       {isProcurementStep ? "Valider méthode/processus" : "Approuver"}
                     </button>
-                    {req.status === "MANAGER_REVIEW" ||
+                    {req.status === "HIERARCHICAL_REVIEW" ||
                     req.status === "PROCUREMENT_REVIEW" ||
-                    req.status === "FINANCE_REVIEW" ? (
+                    req.status === "THRESHOLD_REVIEW" ? (
                       <button
                         type="submit"
                         name="decision"
@@ -342,7 +342,7 @@ export default async function RequisitionDetail({
                         formAction={decideAction}
                         className="rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100"
                       >
-                        {req.status === "FINANCE_REVIEW"
+                        {req.status === "THRESHOLD_REVIEW"
                           ? "Retourner / Signaler exception"
                           : isProcurementStep
                             ? "Demander correction sourcing"
@@ -367,7 +367,7 @@ export default async function RequisitionDetail({
             <Card>
               <CardHeader
                 title="Soumettre la réquisition"
-                description="La réquisition entrera en revue managériale"
+                description="La réquisition entrera en revue hiérarchique"
               />
               <CardBody>
                 <form action={submitRequisitionAction}>

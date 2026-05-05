@@ -257,7 +257,7 @@ export default async function PrintablePO({
       <PdfSignatureBlock
         signatures={[
           { role: "Officier Achats", line: "Signature & cachet" },
-          { role: "Approbateur Finance", line: "Signature & cachet" },
+          { role: "Approbateur hiérarchique", line: "Signature & cachet" },
           { role: "Direction Nationale", line: "Visa final" },
         ]}
       />

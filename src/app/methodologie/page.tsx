@@ -21,7 +21,7 @@ const phases = [
     icon: ClipboardCheck,
     weeks: [1, 2],
     deliverables: [
-      "Ateliers utilisateurs (Programmes, Achats, Finance, Audit)",
+      "Ateliers utilisateurs (Programmes, Achats, Reporting, Audit)",
       "Cartographie du processus actuel",
       "Cahier des charges fonctionnel signé",
     ],
