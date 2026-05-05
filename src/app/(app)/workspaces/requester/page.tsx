@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { Role } from "@/lib/enums";
+import { Priority, Role } from "@/lib/enums";
 import { requireWorkspaceRole } from "@/lib/workspace-guard";
 import { WORKSPACE_BY_ROLE } from "@/lib/workspaces";
 import { TIMELINE_STEPS, STATUS_LABELS } from "@/lib/workflow";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { StatusBadge } from "@/components/StatusBadge";
-import { ContractStrip, Field, WorkspaceHeader } from "../_shared";
+import { AttachmentsZone } from "@/components/AttachmentsZone";
+import { WorkspaceHeader } from "../_shared";
+import { createRequisitionAction } from "../../requisitions/actions";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -19,11 +21,11 @@ export default async function RequesterWorkspacePage() {
       where: { requesterId: user.id },
       include: { department: true, project: true, budgetLine: true, documents: true },
       orderBy: { updatedAt: "desc" },
-      take: 8,
+      take: 5,
     }),
-    prisma.department.findMany({ orderBy: { name: "asc" }, take: 4 }),
-    prisma.project.findMany({ orderBy: { name: "asc" }, take: 4 }),
-    prisma.budgetLine.findMany({ orderBy: { code: "asc" }, take: 4 }),
+    prisma.department.findMany({ orderBy: { name: "asc" } }),
+    prisma.project.findMany({ where: { active: true }, orderBy: { projectCode: "asc" } }),
+    prisma.budgetLine.findMany({ where: { active: true }, include: { project: true }, orderBy: { code: "asc" } }),
     prisma.purchaseRequisition.findFirst({ orderBy: { createdAt: "desc" } }),
   ]);
 
@@ -35,33 +37,71 @@ export default async function RequesterWorkspacePage() {
   return (
     <div className="space-y-6">
       <WorkspaceHeader workspace={workspace} />
-      <ContractStrip workspace={workspace} />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader
-            title="Left · New Requisition form"
-            description="Functional creation remains in /requisitions/new; requester never chooses supplier or offer analysis."
-            action={
-              <Link href="/requisitions/new" className="rounded-md bg-wwf-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-wwf-800">
-                Open form
-              </Link>
-            }
-          />
-          <CardBody className="grid gap-4 sm:grid-cols-2">
-            <Field label="Auto-generated requisition number" value={`${previewNumber} (server-generated on save)`} />
-            <Field label="Department" value={departments.map((d) => d.name).join(" · ") || "Configured by Admin"} />
-            <Field label="Project" value={projects.map((p) => p.projectCode).join(" · ") || "Configured by Admin"} />
-            <Field label="Budget line" value={budgetLines.map((b) => b.code).join(" · ") || "Configured by Admin"} />
-            <Field label="Description" value="Required text field on the requisition." />
-            <Field label="Quantity" value="Positive integer + unit." />
-            <Field label="Budget" value="Amount + currency; line is selected from Admin-controlled budget lines." />
-            <Field label="Attachments" value="Justification/proof files via the attachments component." />
+          <CardHeader title="New Requisition" description="Requester creates drafts or submits. Supplier and offer fields are not available here." />
+          <CardBody>
+            <form action={createRequisitionAction} className="space-y-4">
+              <div className="rounded-md bg-ink-50 px-3 py-2 text-xs text-ink-600 ring-1 ring-ink-100">
+                Requisition number: <span className="font-mono text-ink-900">{previewNumber}</span> after save
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <Select label="Department" name="departmentId" items={departments.map((d) => ({ value: d.id, label: d.name }))} />
+                <Select label="Project" name="projectId" items={projects.map((p) => ({ value: p.id, label: p.projectCode }))} />
+                <Select label="Budget line" name="budgetLineId" items={budgetLines.map((b) => ({ value: b.id, label: `${b.code} · ${b.project.projectCode}` }))} />
+                <div>
+                  <label className="text-xs font-medium text-ink-700">Quantity</label>
+                  <div className="mt-1 grid grid-cols-[1fr_100px] gap-2">
+                    <input name="quantity" type="number" min="1" required defaultValue="1" className="rounded-md border border-ink-200 px-3 py-2 text-sm" />
+                    <input name="unit" defaultValue="unité" className="rounded-md border border-ink-200 px-3 py-2 text-sm" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-ink-700">Budget</label>
+                  <div className="mt-1 grid grid-cols-[1fr_90px] gap-2">
+                    <input name="amount" type="number" min="1" step="0.01" required className="rounded-md border border-ink-200 px-3 py-2 text-sm" />
+                    <input name="currency" defaultValue="USD" className="rounded-md border border-ink-200 px-3 py-2 text-sm" />
+                  </div>
+                </div>
+                <Select
+                  label="Priority"
+                  name="priority"
+                  items={[
+                    { value: Priority.LOW, label: "Low" },
+                    { value: Priority.NORMAL, label: "Normal" },
+                    { value: Priority.HIGH, label: "High" },
+                    { value: Priority.URGENT, label: "Urgent" },
+                  ]}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-ink-700">Description</label>
+                <textarea name="description" rows={3} required className="mt-1 w-full rounded-md border border-ink-200 px-3 py-2 text-sm" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-ink-700">Justification</label>
+                <textarea name="justification" rows={3} required className="mt-1 w-full rounded-md border border-ink-200 px-3 py-2 text-sm" />
+              </div>
+
+              <AttachmentsZone hint="Upload justification/proof after the request is saved." />
+
+              <div className="flex flex-wrap gap-2">
+                <button name="intent" value="draft" type="submit" className="rounded-md border border-ink-200 px-4 py-2 text-sm font-medium text-ink-700 hover:bg-ink-50">
+                  Save draft
+                </button>
+                <button name="intent" value="submit" type="submit" className="rounded-md bg-wwf-700 px-4 py-2 text-sm font-medium text-white hover:bg-wwf-800">
+                  Submit
+                </button>
+              </div>
+            </form>
           </CardBody>
         </Card>
 
         <Card>
-          <CardHeader title="Right · Status timeline" />
+          <CardHeader title="Status timeline" />
           <CardBody>
             <ol className="space-y-2 text-xs">
               {TIMELINE_STEPS.map((status, index) => (
@@ -78,7 +118,7 @@ export default async function RequesterWorkspacePage() {
       </div>
 
       <Card>
-        <CardHeader title="Bottom · My requests" description="Editable only while draft or returned." />
+        <CardHeader title="My requests" description="Editable only while draft or returned." />
         <CardBody className="px-0 py-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -101,10 +141,7 @@ export default async function RequesterWorkspacePage() {
                     <td className="px-5 py-3 font-mono text-xs text-ink-500">
                       <Link href={`/requisitions/${request.id}`} className="hover:text-wwf-700">{request.requisitionNumber}</Link>
                     </td>
-                    <td className="px-5 py-3">
-                      <div className="font-medium text-ink-900">{request.title}</div>
-                      <div className="text-xs text-ink-500">{request.description ?? request.justification.slice(0, 72)}</div>
-                    </td>
+                    <td className="px-5 py-3 text-xs text-ink-700">{request.description}</td>
                     <td className="px-5 py-3 text-xs text-ink-600">{request.department.name} · {request.project.projectCode}</td>
                     <td className="px-5 py-3 text-xs text-ink-700">{request.quantity} {request.unit}</td>
                     <td className="px-5 py-3 font-mono text-xs text-ink-600">{request.budgetLine.code}</td>
@@ -114,11 +151,25 @@ export default async function RequesterWorkspacePage() {
                     <td className="px-5 py-3 text-xs text-ink-500">{formatDate(request.updatedAt)}</td>
                   </tr>
                 ))}
+                {requests.length === 0 ? (
+                  <tr><td colSpan={9} className="px-5 py-6 text-sm text-ink-500">No requests yet.</td></tr>
+                ) : null}
               </tbody>
             </table>
           </div>
         </CardBody>
       </Card>
+    </div>
+  );
+}
+
+function Select({ label, name, items }: { label: string; name: string; items: Array<{ value: string; label: string }> }) {
+  return (
+    <div>
+      <label className="text-xs font-medium text-ink-700">{label}</label>
+      <select name={name} required className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm">
+        {items.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
+      </select>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { requireWorkspaceRole } from "@/lib/workspace-guard";
 import { WORKSPACE_BY_ROLE } from "@/lib/workspaces";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { Badge } from "@/components/Badge";
-import { ContractStrip, WorkspaceHeader } from "../_shared";
+import { WorkspaceHeader } from "../_shared";
 import { DOCUMENT_CATEGORY_LABEL } from "@/lib/enums";
 import { formatDate, formatDateTime } from "@/lib/format";
 
@@ -52,8 +52,6 @@ export default async function ArchiveAuditWorkspacePage({ searchParams }: { sear
   return (
     <div className="space-y-6">
       <WorkspaceHeader workspace={workspace} />
-      <ContractStrip workspace={workspace} />
-
       <Card>
         <CardHeader title="Top · Global search" description="Search documents and correlate with immutable audit events." action={<Link href="/print/audit" target="_blank" className="text-xs font-medium text-wwf-700">Export audit pack</Link>} />
         <CardBody>

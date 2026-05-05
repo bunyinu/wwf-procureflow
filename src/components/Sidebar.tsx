@@ -230,9 +230,6 @@ export function Sidebar({ role }: { role: Role }) {
         <div className="flex items-center gap-2 text-[10.5px] uppercase tracking-[0.14em] text-ink-500">
           <Leaf className="h-3 w-3" /> WWF-RDC
         </div>
-        <div className="mt-0.5 text-[11px] text-ink-700">
-          8 separate workspaces · no role-filter dashboard
-        </div>
       </div>
     </aside>
   );

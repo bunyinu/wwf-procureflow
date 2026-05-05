@@ -30,7 +30,7 @@ async function nextRequisitionNumber(): Promise<string> {
 }
 
 const requisitionSchema = z.object({
-  title: z.string().min(3),
+  title: z.string().optional(),
   description: z.string().min(3),
   quantity: z.coerce.number().int().positive(),
   unit: z.string().min(1).default("unité"),
@@ -55,7 +55,7 @@ export async function createRequisitionAction(formData: FormData) {
   const submit = formData.get("intent") === "submit";
 
   const result = requisitionSchema.safeParse({
-    title: formData.get("title"),
+    title: formData.get("title") || undefined,
     description: formData.get("description"),
     quantity: formData.get("quantity") || 1,
     unit: formData.get("unit") || "unité",
@@ -77,6 +77,7 @@ export async function createRequisitionAction(formData: FormData) {
     redirect(`/requisitions/new?error=${msg}`);
   }
   const parsed = result.data;
+  const title = parsed.title?.trim() || parsed.description.trim().slice(0, 90);
 
   const reqNum = await nextRequisitionNumber();
 
@@ -86,7 +87,7 @@ export async function createRequisitionAction(formData: FormData) {
   const created = await prisma.purchaseRequisition.create({
     data: {
       requisitionNumber: reqNum,
-      title: parsed.title,
+      title,
       description: parsed.description,
       quantity: parsed.quantity,
       unit: parsed.unit,

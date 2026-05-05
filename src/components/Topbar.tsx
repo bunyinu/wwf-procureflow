@@ -38,9 +38,6 @@ export function Topbar({
           />
           {ROLE_LABELS[role]}
         </span>
-        <span className="hidden text-xs text-ink-500 sm:inline">
-          Plateforme institutionnelle de gestion des achats
-        </span>
       </div>
       <div className="flex items-center gap-3">
         <Link

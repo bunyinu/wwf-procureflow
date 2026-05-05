@@ -8,7 +8,7 @@ import { Card, CardBody, CardHeader } from "@/components/Card";
 import { Stat } from "@/components/Stat";
 import { StatusBadge } from "@/components/StatusBadge";
 import { TypeBars } from "@/components/charts/TypeBars";
-import { ContractStrip, WorkspaceHeader } from "../_shared";
+import { WorkspaceHeader } from "../_shared";
 import { PROCUREMENT_TYPE_LABEL } from "@/lib/enums";
 import { STATUS_LABELS } from "@/lib/workflow";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -46,8 +46,6 @@ export default async function ReportingWorkspacePage() {
   return (
     <div className="space-y-6">
       <WorkspaceHeader workspace={workspace} />
-      <ContractStrip workspace={workspace} />
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Requisitions" value={requisitions.length} icon={FileSpreadsheet} tone="brand" hint="All statuses" />
         <Stat label="Portfolio value" value={formatCurrency(totalValue)} icon={FileSpreadsheet} tone="good" hint="USD equivalent" />

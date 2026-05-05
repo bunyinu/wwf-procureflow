@@ -8,7 +8,7 @@ import { Card, CardBody, CardHeader } from "@/components/Card";
 import { StatusBadge } from "@/components/StatusBadge";
 import { PriorityBadge } from "@/components/PriorityBadge";
 import { Badge } from "@/components/Badge";
-import { ContractStrip, Field, WorkspaceHeader } from "../_shared";
+import { Field, WorkspaceHeader } from "../_shared";
 import { formatCurrency, formatDateTime, relativeFromNow } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -43,8 +43,6 @@ export default async function ApproverWorkspacePage() {
   return (
     <div className="space-y-6">
       <WorkspaceHeader workspace={workspace} />
-      <ContractStrip workspace={workspace} />
-
       <Card>
         <CardHeader title="Top · Approval queue cards" description={`${queue.length} requests waiting for hierarchical threshold validation.`} />
         <CardBody className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">

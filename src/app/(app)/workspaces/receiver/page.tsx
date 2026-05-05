@@ -7,7 +7,7 @@ import { createReceiptAction } from "../../requisitions/actions";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { AttachmentsZone } from "@/components/AttachmentsZone";
-import { ContractStrip, Field, WorkspaceHeader } from "../_shared";
+import { Field, WorkspaceHeader } from "../_shared";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -33,8 +33,6 @@ export default async function ReceiverWorkspacePage() {
   return (
     <div className="space-y-6">
       <WorkspaceHeader workspace={workspace} />
-      <ContractStrip workspace={workspace} />
-
       <Card>
         <CardHeader title="Top · Pending receptions" description={`${pending.length} order(s) awaiting GRN/SAN.`} />
         <CardBody className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">

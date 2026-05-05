@@ -5,7 +5,7 @@ import { requireWorkspaceRole } from "@/lib/workspace-guard";
 import { WORKSPACE_BY_ROLE } from "@/lib/workspaces";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { Badge } from "@/components/Badge";
-import { ContractStrip, Field, WorkspaceHeader } from "../_shared";
+import { Field, WorkspaceHeader } from "../_shared";
 import { DUE_DILIGENCE_BADGE, DUE_DILIGENCE_LABEL, SUPPLIER_STATUS_BADGE, SUPPLIER_STATUS_LABEL } from "@/lib/enums";
 import { formatCurrency, formatDate } from "@/lib/format";
 
@@ -24,8 +24,6 @@ export default async function SupplierManagerWorkspacePage() {
   return (
     <div className="space-y-6">
       <WorkspaceHeader workspace={workspace} />
-      <ContractStrip workspace={workspace} />
-
       <div className="grid gap-6 lg:grid-cols-4">
         <Card>
           <CardHeader title="Left · Supplier list" action={<Link href="/suppliers" className="text-xs font-medium text-wwf-700">Open registry</Link>} />

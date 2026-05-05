@@ -6,7 +6,7 @@ import { WORKSPACE_BY_ROLE } from "@/lib/workspaces";
 import { getPermissionMatrix, ROLE_DISPLAY } from "@/lib/permissions";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { Badge } from "@/components/Badge";
-import { ContractStrip, WorkspaceHeader } from "../_shared";
+import { WorkspaceHeader } from "../_shared";
 
 export const dynamic = "force-dynamic";
 
@@ -25,8 +25,6 @@ export default async function AdminWorkspacePage() {
   return (
     <div className="space-y-6">
       <WorkspaceHeader workspace={workspace} />
-      <ContractStrip workspace={workspace} />
-
       <div className="grid gap-6 lg:grid-cols-4">
         <Card>
           <CardHeader title="Left · Admin menu" />

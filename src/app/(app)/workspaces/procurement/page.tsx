@@ -8,7 +8,7 @@ import { selectProcurementMethodAction } from "../../requisitions/actions";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Badge } from "@/components/Badge";
-import { ContractStrip, Field, WorkspaceHeader } from "../_shared";
+import { Field, WorkspaceHeader } from "../_shared";
 import { PROCUREMENT_TYPE_LABEL } from "@/lib/enums";
 import { formatCurrency, relativeFromNow } from "@/lib/format";
 
@@ -43,8 +43,6 @@ export default async function ProcurementOfficerWorkspacePage() {
   return (
     <div className="space-y-6">
       <WorkspaceHeader workspace={workspace} />
-      <ContractStrip workspace={workspace} />
-
       <Card>
         <CardHeader title="Top · Approved requests waiting procurement" description="Business approval is already complete before this workspace acts." />
         <CardBody className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
