@@ -234,7 +234,7 @@ npm run db:reset
 
 Auto-deploy à chaque `git push origin main`. Le `buildCommand` :
 ```bash
-npm install \
+npm install --include=dev \
   && npm run lint \
   && npm test \
   && npx prisma generate \
