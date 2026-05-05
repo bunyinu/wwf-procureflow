@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { Stat } from "@/components/Stat";
 import { CashFlowBars } from "@/components/charts/CashFlowBars";
@@ -24,7 +24,7 @@ const MONTHS_FR = [
 ];
 
 export default async function FinanceCashflowPage() {
-  await requireUser();
+  await requireRole("REPORTING");
   const requisitions = await prisma.purchaseRequisition.findMany({
     where: { status: { not: "CANCELLED" }, submittedAt: { not: null } },
     include: { project: true },

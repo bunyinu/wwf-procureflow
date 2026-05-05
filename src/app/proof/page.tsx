@@ -23,7 +23,7 @@ const cards: Array<{
     title: "1. Réquisition",
     icon: ClipboardList,
     description:
-      "Saisie structurée d'une demande d'achat avec département, projet, ligne budgétaire, quantité, type de procédure, justification et fournisseur préféré.",
+      "Saisie structurée d'une demande d'achat avec département, projet, description, quantité, budget, ligne budgétaire, justificatifs et numéro auto — sans choix fournisseur ni méthode d'achat côté Demandeur.",
     bullets: [
       "Brouillon ou soumission immédiate",
       "Numéro unique automatique",
@@ -34,7 +34,7 @@ const cards: Array<{
     title: "2. Circuit de validation",
     icon: Workflow,
     description:
-      "Cycle multi-niveaux Manager → Achats → Finance, avec retour pour révision, rejet motivé et visa Direction au-delà de 10 000 USD.",
+      "Cycle Demandeur → Approbateur hiérarchique → Achats → Fournisseurs → Achats → Réception → Audit/Reporting, avec retour pour révision, rejet motivé et seuil renforcé au-delà des montants configurés.",
     bullets: [
       "Transitions verrouillées côté serveur",
       "Notifications automatiques (TDR §4.2)",
@@ -107,7 +107,7 @@ const conformance: Array<{
   },
   {
     tdr: "§4.2 Validation hiérarchique selon seuils",
-    role: "Manager · Achats · Finance · Direction (>10k USD)",
+    role: "Approbateur hiérarchique · Achats · seuil renforcé (>10k USD)",
     status: "done",
     evidence: "3 paliers (<1k, 1k–10k, >10k USD)",
     link: "/admin/settings",
@@ -145,15 +145,15 @@ const conformance: Array<{
   },
   {
     tdr: "§4.3 Suivi des délais par étape",
-    role: "Tous · alertes sur file pour Manager/Achats/Finance",
+    role: "Tous · alertes sur file pour Approbateur/Achats",
     status: "exceed",
     evidence: "Panneau dédié sur chaque réquisition + SLA paramétrable",
   },
   {
     tdr: "§4.3 Identification des retards",
-    role: "Manager/Achats/Finance (à leur niveau) · Auditeur/Admin (vue globale)",
+    role: "Approbateur/Achats (à leur niveau) · Auditeur/Admin (vue globale)",
     status: "exceed",
-    evidence: "Badge « SLA dépassé » par étape + KPI dashboard",
+    evidence: "Badge « SLA dépassé » par étape + KPI reporting",
   },
   {
     tdr: "§4.4 Classification automatique (5 types)",
@@ -170,13 +170,13 @@ const conformance: Array<{
   },
   {
     tdr: "§4.4 Analyse des offres",
-    role: "Achats (saisit/compare) · Finance (consulte)",
+    role: "Achats (saisit/compare) · Reporting (consulte)",
     status: "exceed",
     evidence: "Tableau comparatif technique + financier sur la réquisition",
   },
   {
     tdr: "§4.4 Attribution et suivi des marchés",
-    role: "Achats (émet PO) · Finance (consulte engagement)",
+    role: "Achats (émet PO) · Reporting (consulte engagement)",
     status: "done",
     evidence: "Bons de commande + suivi statut + lien fournisseur",
     link: "/purchase-orders",
@@ -190,7 +190,7 @@ const conformance: Array<{
   },
   {
     tdr: "§4.5 Suivi des fournisseurs et commandes",
-    role: "Achats (op) · Finance/Admin/Auditeur (consultation)",
+    role: "Achats (op) · Audit/Reporting (consultation)",
     status: "done",
     evidence: "/suppliers, /purchase-orders, /receipts",
   },
@@ -224,12 +224,12 @@ const conformance: Array<{
     tdr: "§4.8 Tableau de bord interactif + KPI",
     role: "Tous · KPIs scopés par rôle",
     status: "exceed",
-    evidence: "6 dashboards distincts (1 par rôle)",
-    link: "/dashboard",
+    evidence: "8 workspaces distincts (1 par rôle)",
+    link: "/workspaces",
   },
   {
     tdr: "§4.8 Suivi des délais de traitement",
-    role: "Manager/Achats/Finance (op) · Auditeur (compliance)",
+    role: "Approbateur/Achats (op) · Auditeur (compliance)",
     status: "done",
     evidence: "Tile « Respect des SLA » + cycle moyen sparkline",
   },

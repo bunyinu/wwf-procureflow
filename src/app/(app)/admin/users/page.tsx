@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { assertCan } from "@/lib/permissions";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { Badge } from "@/components/Badge";
@@ -16,8 +16,8 @@ export default async function AdminUsersPage({
 }: {
   searchParams: { error?: string };
 }) {
-  const user = await requireUser();
-  assertCan(user, "read", "user", {}, "/dashboard?denied=1");
+  const user = await requireRole("ADMIN");
+  assertCan(user, "read", "user", {}, "/workspaces/admin?denied=1");
   const [users, departments] = await Promise.all([
     prisma.user.findMany({
       include: { department: true },

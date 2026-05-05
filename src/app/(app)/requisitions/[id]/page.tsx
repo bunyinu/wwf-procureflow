@@ -53,6 +53,10 @@ const ALERT_MESSAGES: Record<string, { tone: "warn" | "error"; text: string }> =
     tone: "error",
     text: "Vous n'avez pas les droits pour effectuer cette action.",
   },
+  procurement_method_required: {
+    tone: "warn",
+    text: "La méthode d'achat doit être sélectionnée par l'Officier Achats avant de poursuivre.",
+  },
 };
 
 export default async function RequisitionDetail({
@@ -104,11 +108,10 @@ export default async function RequisitionDetail({
   const overBudget = req.amount > remaining;
 
   const isOwner = req.requesterId === user.id;
-  const isAdmin = user.role === "ADMIN";
   const expectedRole = nextRoleForStatus(req.status as never);
   const canDecide =
     expectedRole !== null &&
-    (user.role === expectedRole || isAdmin) &&
+    user.role === expectedRole &&
     [
       "MANAGER_REVIEW",
       "PROCUREMENT_REVIEW",
@@ -116,22 +119,23 @@ export default async function RequisitionDetail({
     ].includes(req.status);
 
   const canSubmit =
-    (isOwner || isAdmin) &&
-    isValidTransition(req.status as never, "SUBMITTED");
-  const canCancel = isAdmin && isValidTransition(req.status as never, "CANCELLED");
+    isOwner && isValidTransition(req.status as never, "SUBMITTED");
+  const canCancel = false;
   const canCreatePO =
-    (user.role === "PROCUREMENT" || isAdmin) &&
+    user.role === "PROCUREMENT" &&
     req.status === "PO_CREATED" &&
     req.purchaseOrders.length === 0;
   const canReceive =
-    (user.role === "PROCUREMENT" || isAdmin) &&
+    user.role === "RECEIVER" &&
     req.status === "PO_CREATED" &&
     req.purchaseOrders.length > 0;
   const canClose =
-    (user.role === "PROCUREMENT" || isAdmin) && req.status === "RECEIVED";
+    user.role === "PROCUREMENT" && req.status === "RECEIVED";
 
   const alertKey = searchParams.error || (searchParams.invalid ? "invalid" : "") || (searchParams.denied ? "denied" : "");
   const alert = alertKey ? ALERT_MESSAGES[alertKey] : null;
+  const isProcurementStep = req.status === "PROCUREMENT_REVIEW";
+  const canViewApprovalChain = user.role !== "RECEIVER";
 
   return (
     <div className="space-y-5">
@@ -185,33 +189,37 @@ export default async function RequisitionDetail({
         </div>
       ) : null}
 
-      <Card>
-        <CardHeader title="Cycle d'approbation" description="Étapes du workflow institutionnel" />
-        <CardBody>
-          <WorkflowTimeline current={req.status as never} />
-        </CardBody>
-      </Card>
+      {canViewApprovalChain ? (
+        <>
+          <Card>
+            <CardHeader title="Cycle d'approbation" description="Étapes du workflow institutionnel" />
+            <CardBody>
+              <WorkflowTimeline current={req.status as never} />
+            </CardBody>
+          </Card>
 
-      <Card>
-        <CardHeader
-          title="Suivi des délais par étape"
-          description="TDR §4.3 — durée par étape vs SLA, détection automatique des retards"
-        />
-        <CardBody>
-          <SlaPanel
-            timings={computeStageTimings({
-              submittedAt: req.submittedAt,
-              createdAt: req.createdAt,
-              status: req.status,
-              approvals: req.approvals.map((a) => ({
-                decidedAt: a.decidedAt,
-                oldStatus: a.oldStatus,
-                newStatus: a.newStatus,
-              })),
-            })}
-          />
-        </CardBody>
-      </Card>
+          <Card>
+            <CardHeader
+              title="Suivi des délais par étape"
+              description="TDR §4.3 — durée par étape vs SLA, détection automatique des retards"
+            />
+            <CardBody>
+              <SlaPanel
+                timings={computeStageTimings({
+                  submittedAt: req.submittedAt,
+                  createdAt: req.createdAt,
+                  status: req.status,
+                  approvals: req.approvals.map((a) => ({
+                    decidedAt: a.decidedAt,
+                    oldStatus: a.oldStatus,
+                    newStatus: a.newStatus,
+                  })),
+                })}
+              />
+            </CardBody>
+          </Card>
+        </>
+      ) : null}
 
       <div className="grid gap-5 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-5">
@@ -231,6 +239,14 @@ export default async function RequisitionDetail({
                   ]
                 }
               />
+              <div className="sm:col-span-2">
+                <div className="text-[11px] font-medium uppercase tracking-wide text-ink-500">
+                  Description
+                </div>
+                <p className="mt-1 whitespace-pre-line text-sm text-ink-800">
+                  {req.description ?? "—"}
+                </p>
+              </div>
               <Field
                 label="Date de livraison souhaitée"
                 value={formatDate(req.expectedDeliveryDate)}
@@ -248,14 +264,14 @@ export default async function RequisitionDetail({
                 value={
                   <span className="flex flex-wrap gap-1">
                     <Badge className="bg-amber-50 text-amber-800 ring-1 ring-amber-200">
-                      Manager
+                      Tier {tier.tier} threshold
                     </Badge>
                     <Badge className="bg-purple-50 text-purple-700 ring-1 ring-purple-200">
-                      Achats
+                      Achats classification
                     </Badge>
-                    {tier.needsFinance ? (
+                    {tier.needsEnhancedThresholdApproval ? (
                       <Badge className="bg-orange-50 text-orange-700 ring-1 ring-orange-200">
-                        Finance
+                        Next threshold approval
                       </Badge>
                     ) : null}
                     {tier.needsDirectorFlag ? (
@@ -284,7 +300,7 @@ export default async function RequisitionDetail({
           {canDecide ? (
             <Card>
               <CardHeader
-                title="Décision requise"
+                title={isProcurementStep ? "Validation processus achats" : "Décision requise"}
                 description={`Étape : ${ROLE_LABELS[expectedRole!]}`}
               />
               <CardBody>
@@ -314,7 +330,7 @@ export default async function RequisitionDetail({
                       value="APPROVED"
                       className="rounded-md bg-wwf-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-wwf-800"
                     >
-                      Approuver
+                      {isProcurementStep ? "Valider méthode/processus" : "Approuver"}
                     </button>
                     {req.status === "MANAGER_REVIEW" ||
                     req.status === "PROCUREMENT_REVIEW" ||
@@ -328,7 +344,9 @@ export default async function RequisitionDetail({
                       >
                         {req.status === "FINANCE_REVIEW"
                           ? "Retourner / Signaler exception"
-                          : "Retourner pour révision"}
+                          : isProcurementStep
+                            ? "Demander correction sourcing"
+                            : "Retourner pour révision"}
                       </button>
                     ) : null}
                     <button
@@ -337,7 +355,7 @@ export default async function RequisitionDetail({
                       value="REJECTED"
                       className="rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
                     >
-                      Rejeter
+                      {isProcurementStep ? "Bloquer processus" : "Rejeter"}
                     </button>
                   </div>
                 </form>
@@ -488,59 +506,61 @@ export default async function RequisitionDetail({
             </Card>
           ) : null}
 
-          <Card>
-            <CardHeader title="Décisions et commentaires" />
-            <CardBody>
-              {req.approvals.length === 0 ? (
-                <p className="text-sm text-ink-500">
-                  Aucune décision n&apos;a encore été enregistrée.
-                </p>
-              ) : (
-                <ul className="space-y-3">
-                  {req.approvals.map((a) => (
-                    <li
-                      key={a.id}
-                      className="rounded-md border border-ink-100 bg-ink-50/40 px-3 py-2.5"
-                    >
-                      <div className="flex items-center justify-between text-xs text-ink-600">
-                        <div>
-                          <span className="font-medium text-ink-800">
-                            {a.approver.fullName}
-                          </span>{" "}
-                          ·{" "}
-                          {ROLE_LABELS[a.approverRole as keyof typeof ROLE_LABELS]}
+          {canViewApprovalChain ? (
+            <Card>
+              <CardHeader title="Décisions et commentaires" />
+              <CardBody>
+                {req.approvals.length === 0 ? (
+                  <p className="text-sm text-ink-500">
+                    Aucune décision n&apos;a encore été enregistrée.
+                  </p>
+                ) : (
+                  <ul className="space-y-3">
+                    {req.approvals.map((a) => (
+                      <li
+                        key={a.id}
+                        className="rounded-md border border-ink-100 bg-ink-50/40 px-3 py-2.5"
+                      >
+                        <div className="flex items-center justify-between text-xs text-ink-600">
+                          <div>
+                            <span className="font-medium text-ink-800">
+                              {a.approver.fullName}
+                            </span>{" "}
+                            ·{" "}
+                            {ROLE_LABELS[a.approverRole as keyof typeof ROLE_LABELS]}
+                          </div>
+                          <span>{formatDateTime(a.decidedAt)}</span>
                         </div>
-                        <span>{formatDateTime(a.decidedAt)}</span>
-                      </div>
-                      <div className="mt-1 flex items-center gap-2 text-sm">
-                        <Badge
-                          className={
-                            a.decision === "APPROVED"
-                              ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                        <div className="mt-1 flex items-center gap-2 text-sm">
+                          <Badge
+                            className={
+                              a.decision === "APPROVED"
+                                ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200"
+                                : a.decision === "REJECTED"
+                                  ? "bg-red-50 text-red-700 ring-1 ring-red-200"
+                                  : "bg-amber-50 text-amber-800 ring-1 ring-amber-200"
+                            }
+                          >
+                            {a.decision === "APPROVED"
+                              ? "Approuvé"
                               : a.decision === "REJECTED"
-                                ? "bg-red-50 text-red-700 ring-1 ring-red-200"
-                                : "bg-amber-50 text-amber-800 ring-1 ring-amber-200"
-                          }
-                        >
-                          {a.decision === "APPROVED"
-                            ? "Approuvé"
-                            : a.decision === "REJECTED"
-                              ? "Rejeté"
-                              : "Retourné"}
-                        </Badge>
-                        <span className="text-ink-700">
-                          {a.oldStatus} → {a.newStatus}
-                        </span>
-                      </div>
-                      {a.comment ? (
-                        <p className="mt-1 text-sm text-ink-700">{a.comment}</p>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardBody>
-          </Card>
+                                ? "Rejeté"
+                                : "Retourné"}
+                          </Badge>
+                          <span className="text-ink-700">
+                            {a.oldStatus} → {a.newStatus}
+                          </span>
+                        </div>
+                        {a.comment ? (
+                          <p className="mt-1 text-sm text-ink-700">{a.comment}</p>
+                        ) : null}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </CardBody>
+            </Card>
+          ) : null}
 
           <Card>
             <CardHeader title="Journal d'audit (extrait)" />
@@ -596,7 +616,7 @@ export default async function RequisitionDetail({
               />
               {overBudget ? (
                 <div className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-200">
-                  Exception budgétaire — la demande nécessite une revue Finance
+                  Exception budgétaire — la demande nécessite une revue de seuil
                   approfondie. La soumission n&apos;est pas bloquée dans le
                   prototype.
                 </div>

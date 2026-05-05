@@ -597,6 +597,7 @@ async function main() {
       data: {
         requisitionNumber: reqNum,
         title: r.title,
+        description: r.justification,
         quantity: qm.quantity,
         unit: qm.unit,
         requesterId: userByEmail[r.requesterEmail].id,

@@ -55,6 +55,7 @@ export const Priority = {
 export type Priority = (typeof Priority)[keyof typeof Priority];
 
 export const ProcurementType = {
+  UNCLASSIFIED: "UNCLASSIFIED",
   DIRECT_PURCHASE: "DIRECT_PURCHASE",
   QUOTATION: "QUOTATION",
   TENDER: "TENDER",
@@ -126,10 +127,11 @@ export const PRIORITY_LABEL: Record<Priority, string> = {
 };
 
 export const PROCUREMENT_TYPE_LABEL: Record<ProcurementType, string> = {
+  UNCLASSIFIED: "À classifier par Achats",
   DIRECT_PURCHASE: "Achat direct",
-  QUOTATION: "Demande de devis",
+  QUOTATION: "Cotations multiples",
   TENDER: "Appel d'offres",
-  SOLE_SOURCE: "Fournisseur unique",
+  SOLE_SOURCE: "Source unique",
   PREQUALIFIED_SUPPLIER: "Fournisseur préqualifié",
 };
 

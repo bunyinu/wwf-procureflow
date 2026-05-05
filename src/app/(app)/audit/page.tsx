@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { ROLE_LABELS } from "@/lib/workflow";
 import { formatDateTime } from "@/lib/format";
@@ -23,7 +23,7 @@ export default async function AuditPage({
     page?: string;
   };
 }) {
-  await requireUser();
+  await requireRole("AUDITOR");
   const where = {
     ...(searchParams.actor ? { actorId: searchParams.actor } : {}),
     ...(searchParams.entity ? { entityType: searchParams.entity } : {}),

@@ -7,7 +7,7 @@ import {
   Search,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { EmptyState } from "@/components/EmptyState";
@@ -24,7 +24,7 @@ export default async function DocumentsPage({
 }: {
   searchParams: { q?: string; category?: string };
 }) {
-  await requireUser();
+  await requireRole("AUDITOR");
   const q = (searchParams.q ?? "").trim().toLowerCase();
   const cat = searchParams.category;
 

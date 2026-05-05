@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { assertCan } from "@/lib/permissions";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { Badge } from "@/components/Badge";
@@ -18,8 +18,8 @@ export default async function AdminBudgetLinesPage({
 }: {
   searchParams: { error?: string; project?: string };
 }) {
-  const me = await requireUser();
-  assertCan(me, "update", "budgetLine", {}, "/dashboard?denied=1");
+  const me = await requireRole("ADMIN");
+  assertCan(me, "update", "budgetLine", {}, "/workspaces/admin?denied=1");
   const [budgetLines, projects] = await Promise.all([
     prisma.budgetLine.findMany({
       include: { project: true, _count: { select: { requisitions: true } } },

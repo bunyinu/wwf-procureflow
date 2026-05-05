@@ -11,7 +11,8 @@
     "db:push": "prisma db push --accept-data-loss",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma db push --force-reset --accept-data-loss && tsx prisma/seed.ts",
-    "render:release": "prisma db push --accept-data-loss && tsx prisma/seed.ts"
+    "render:release": "prisma db push --accept-data-loss && tsx prisma/seed.ts",
+    "test": "tsx scripts/workspace-contract.test.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { Card, CardBody } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { EmptyState } from "@/components/EmptyState";
@@ -14,7 +14,7 @@ import { formatCurrency, formatDate } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 export default async function PurchaseOrdersPage() {
-  await requireUser();
+  const user = await requireRole("PROCUREMENT", "SUPPLIER_MANAGER", "RECEIVER");
   const orders = await prisma.purchaseOrder.findMany({
     include: { supplier: true, requisition: true },
     orderBy: { createdAt: "desc" },
@@ -38,7 +38,7 @@ export default async function PurchaseOrdersPage() {
             <div className="px-5 py-10">
               <EmptyState
                 title="Aucun bon de commande"
-                description="Les PO apparaissent ici une fois la revue Finance terminée."
+                description="Les PO apparaissent ici une fois la validation par seuil terminée."
               />
             </div>
           ) : (
@@ -76,12 +76,16 @@ export default async function PurchaseOrdersPage() {
                         </div>
                       </td>
                       <td className="px-5 py-3 text-ink-700">
-                        <Link
-                          href={`/suppliers/${po.supplierId}`}
-                          className="hover:text-wwf-700"
-                        >
-                          {po.supplier.companyName}
-                        </Link>
+                        {user.role === "SUPPLIER_MANAGER" ? (
+                          <Link
+                            href={`/suppliers/${po.supplierId}`}
+                            className="hover:text-wwf-700"
+                          >
+                            {po.supplier.companyName}
+                          </Link>
+                        ) : (
+                          po.supplier.companyName
+                        )}
                       </td>
                       <td className="px-5 py-3 font-medium text-ink-900">
                         {formatCurrency(po.amount, po.currency)}

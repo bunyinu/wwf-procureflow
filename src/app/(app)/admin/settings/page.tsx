@@ -1,6 +1,6 @@
 import { ShieldCheck } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { assertCan } from "@/lib/permissions";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { PermissionsMatrix } from "@/components/PermissionsMatrix";
@@ -26,13 +26,13 @@ const SETTINGS_LAYOUT: Array<{
     fields: [
       {
         id: "threshold.tier1.maxAmountUSD",
-        label: "Plafond niveau 1 — Manager + Achats",
+        label: "Plafond niveau 1 — Approbateur + Achats",
         type: "number",
         suffix: "USD",
       },
       {
         id: "threshold.tier2.maxAmountUSD",
-        label: "Plafond niveau 2 — Manager + Achats + Finance",
+        label: "Plafond niveau 2 — Approbateur + Achats + seuil renforcé",
         type: "number",
         suffix: "USD",
       },
@@ -43,14 +43,14 @@ const SETTINGS_LAYOUT: Array<{
     description:
       "Délai indicatif par étape pour identifier les approbations en retard.",
     fields: [
-      { id: "sla.managerReviewDays", label: "Revue Manager", type: "number", suffix: "j" },
+      { id: "sla.managerReviewDays", label: "Revue hiérarchique", type: "number", suffix: "j" },
       {
         id: "sla.procurementReviewDays",
         label: "Revue Achats",
         type: "number",
         suffix: "j",
       },
-      { id: "sla.financeReviewDays", label: "Revue Finance", type: "number", suffix: "j" },
+      { id: "sla.financeReviewDays", label: "Revue seuil renforcé", type: "number", suffix: "j" },
     ],
   },
 ];
@@ -60,9 +60,8 @@ export default async function AdminSettingsPage({
 }: {
   searchParams: { saved?: string };
 }) {
-  const user = await requireUser();
-  // Anyone can read settings; only Admin can persist (assertCan in the action).
-  // The matrix panel below is read-only and accessible to all authenticated users.
+  const user = await requireRole("ADMIN");
+  // Admin workspace only. Persist is still guarded in the server action.
   const all = await prisma.setting.findMany();
   const map = new Map(all.map((s) => [s.id, s.value]));
   const enabled = (map.get("procurementTypes.enabled") || "")
@@ -191,10 +190,9 @@ export default async function AdminSettingsPage({
               l&apos;administrateur.
             </div>
             <div className="rounded-md border border-ink-100 bg-ink-50/40 px-3 py-2">
-              <div className="font-medium text-ink-800">Annulation contrôlée</div>
-              Les réquisitions actives peuvent être annulées par
-              l&apos;administrateur uniquement, avec motif obligatoire
-              consigné au journal.
+              <div className="font-medium text-ink-800">Séparation stricte</div>
+              L&apos;administrateur configure les droits, seuils et référentiels,
+              mais ne prend pas de décisions métier dans le workflow.
             </div>
             <div className="rounded-md border border-ink-100 bg-ink-50/40 px-3 py-2">
               <div className="font-medium text-ink-800">

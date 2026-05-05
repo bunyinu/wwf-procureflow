@@ -3,9 +3,9 @@ import { Role, RequisitionStatus } from "@/lib/enums";
 export const STATUS_LABELS: Record<RequisitionStatus, string> = {
   DRAFT: "Brouillon",
   SUBMITTED: "Soumise",
-  MANAGER_REVIEW: "Revue Manager",
+  MANAGER_REVIEW: "Revue hiérarchique",
   PROCUREMENT_REVIEW: "Revue Achats",
-  FINANCE_REVIEW: "Revue Finance",
+  FINANCE_REVIEW: "Revue seuil renforcé",
   PO_CREATED: "BC émis",
   RECEIVED: "Reçue",
   CLOSED: "Clôturée",
@@ -43,9 +43,9 @@ export const TRANSITIONS: Partial<Record<RequisitionStatus, RequisitionStatus[]>
   DRAFT: ["SUBMITTED"],
   SUBMITTED: ["MANAGER_REVIEW"],
   MANAGER_REVIEW: ["PROCUREMENT_REVIEW", "REJECTED", "RETURNED_FOR_REVISION"],
-  RETURNED_FOR_REVISION: ["DRAFT"],
-  // Any reviewer (Manager, Achats, Finance) can return for revision.
-  PROCUREMENT_REVIEW: ["FINANCE_REVIEW", "REJECTED", "RETURNED_FOR_REVISION"],
+  RETURNED_FOR_REVISION: ["DRAFT", "SUBMITTED"],
+  // Any reviewer (hierarchical approver or procurement) can return for revision.
+  PROCUREMENT_REVIEW: ["FINANCE_REVIEW", "PO_CREATED", "REJECTED", "RETURNED_FOR_REVISION"],
   FINANCE_REVIEW: ["PO_CREATED", "REJECTED", "RETURNED_FOR_REVISION"],
   PO_CREATED: ["RECEIVED"],
   RECEIVED: ["CLOSED"],
@@ -69,34 +69,34 @@ export const FINAL_STATUSES: RequisitionStatus[] = [
 
 export function approvalTier(amountUSD: number): {
   tier: 1 | 2 | 3;
-  needsManager: boolean;
+  needsHierarchicalApprover: boolean;
   needsProcurement: boolean;
-  needsFinance: boolean;
+  needsEnhancedThresholdApproval: boolean;
   needsDirectorFlag: boolean;
 } {
   if (amountUSD < 1000) {
     return {
       tier: 1,
-      needsManager: true,
+      needsHierarchicalApprover: true,
       needsProcurement: true,
-      needsFinance: false,
+      needsEnhancedThresholdApproval: false,
       needsDirectorFlag: false,
     };
   }
   if (amountUSD <= 10000) {
     return {
       tier: 2,
-      needsManager: true,
+      needsHierarchicalApprover: true,
       needsProcurement: true,
-      needsFinance: true,
+      needsEnhancedThresholdApproval: true,
       needsDirectorFlag: false,
     };
   }
   return {
     tier: 3,
-    needsManager: true,
+    needsHierarchicalApprover: true,
     needsProcurement: true,
-    needsFinance: true,
+    needsEnhancedThresholdApproval: true,
     needsDirectorFlag: true,
   };
 }
@@ -105,11 +105,11 @@ export function nextRoleForStatus(status: RequisitionStatus): Role | null {
   switch (status) {
     case "SUBMITTED":
     case "MANAGER_REVIEW":
-      return "APPROVER"; // hierarchical approval (was MANAGER)
+      return "APPROVER"; // hierarchical approval
     case "PROCUREMENT_REVIEW":
       return "PROCUREMENT"; // classification + offer analysis
     case "FINANCE_REVIEW":
-      return "APPROVER"; // budget threshold validation (was FINANCE)
+      return "APPROVER"; // enhanced threshold validation
     case "PO_CREATED":
       return "PROCUREMENT"; // award + emit PO
     case "RECEIVED":

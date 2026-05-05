@@ -8,8 +8,7 @@ import {
   Truck,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
-import { assertCan } from "@/lib/permissions";
+import { requireRole } from "@/lib/auth";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { Stat } from "@/components/Stat";
 import { Badge } from "@/components/Badge";
@@ -28,11 +27,7 @@ import { formatCurrency, formatDate, relativeFromNow } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 export default async function ProcurementWorkspacePage() {
-  const user = await requireUser();
-  // Procurement Officer + Admin
-  if (user.role !== "PROCUREMENT" && user.role !== "ADMIN") {
-    assertCan(user, "issuePO", "purchaseOrder", {}, "/dashboard?denied=1");
-  }
+  await requireRole("PROCUREMENT");
 
   const [classifyQueue, awardQueue, activeOrders, suppliers] = await Promise.all([
     prisma.purchaseRequisition.findMany({
@@ -95,7 +90,7 @@ export default async function ProcurementWorkspacePage() {
           value={awardQueue.length}
           icon={Award}
           tone={awardQueue.length > 0 ? "warn" : "good"}
-          hint="Validés Finance, PO non émis"
+          hint="Validés par seuil, PO non émis"
         />
         <Stat
           label="Commandes actives"
@@ -225,7 +220,7 @@ export default async function ProcurementWorkspacePage() {
             <div className="px-5 py-10">
               <EmptyState
                 title="Aucune attribution en attente"
-                description="Les dossiers validés Finance apparaîtront ici."
+                description="Les dossiers validés par seuil apparaîtront ici."
                 icon={Award}
               />
             </div>

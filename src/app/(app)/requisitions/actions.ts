@@ -16,7 +16,7 @@ import {
   RequisitionStatus,
   ReceiptType,
 } from "@/lib/enums";
-import { isValidTransition, nextRoleForStatus } from "@/lib/workflow";
+import { approvalTier, isValidTransition, nextRoleForStatus } from "@/lib/workflow";
 
 async function nextRequisitionNumber(): Promise<string> {
   const last = await prisma.purchaseRequisition.findFirst({
@@ -31,6 +31,7 @@ async function nextRequisitionNumber(): Promise<string> {
 
 const requisitionSchema = z.object({
   title: z.string().min(3),
+  description: z.string().min(3),
   quantity: z.coerce.number().int().positive(),
   unit: z.string().min(1).default("unité"),
   departmentId: z.string().min(1),
@@ -38,13 +39,6 @@ const requisitionSchema = z.object({
   budgetLineId: z.string().min(1),
   amount: z.coerce.number().positive(),
   currency: z.string().min(3).max(4).default("USD"),
-  procurementType: z.enum([
-    ProcurementType.DIRECT_PURCHASE,
-    ProcurementType.QUOTATION,
-    ProcurementType.TENDER,
-    ProcurementType.SOLE_SOURCE,
-    ProcurementType.PREQUALIFIED_SUPPLIER,
-  ]),
   priority: z.enum([
     Priority.LOW,
     Priority.NORMAL,
@@ -53,7 +47,6 @@ const requisitionSchema = z.object({
   ]),
   expectedDeliveryDate: z.string().optional(),
   justification: z.string().min(5),
-  supplierPreference: z.string().optional(),
 });
 
 export async function createRequisitionAction(formData: FormData) {
@@ -63,6 +56,7 @@ export async function createRequisitionAction(formData: FormData) {
 
   const result = requisitionSchema.safeParse({
     title: formData.get("title"),
+    description: formData.get("description"),
     quantity: formData.get("quantity") || 1,
     unit: formData.get("unit") || "unité",
     departmentId: formData.get("departmentId"),
@@ -70,11 +64,9 @@ export async function createRequisitionAction(formData: FormData) {
     budgetLineId: formData.get("budgetLineId"),
     amount: formData.get("amount"),
     currency: formData.get("currency") || "USD",
-    procurementType: formData.get("procurementType"),
     priority: formData.get("priority"),
     expectedDeliveryDate: formData.get("expectedDeliveryDate") as string,
     justification: formData.get("justification"),
-    supplierPreference: formData.get("supplierPreference") as string,
   });
   if (!result.success) {
     const msg = encodeURIComponent(
@@ -87,10 +79,6 @@ export async function createRequisitionAction(formData: FormData) {
   const parsed = result.data;
 
   const reqNum = await nextRequisitionNumber();
-  const justification =
-    parsed.supplierPreference && parsed.supplierPreference.length > 0
-      ? `${parsed.justification}\n\nFournisseur préféré : ${parsed.supplierPreference}`
-      : parsed.justification;
 
   const status = submit
     ? RequisitionStatus.MANAGER_REVIEW
@@ -99,6 +87,7 @@ export async function createRequisitionAction(formData: FormData) {
     data: {
       requisitionNumber: reqNum,
       title: parsed.title,
+      description: parsed.description,
       quantity: parsed.quantity,
       unit: parsed.unit,
       requesterId: user.id,
@@ -107,9 +96,9 @@ export async function createRequisitionAction(formData: FormData) {
       budgetLineId: parsed.budgetLineId,
       amount: parsed.amount,
       currency: parsed.currency,
-      procurementType: parsed.procurementType,
+      procurementType: ProcurementType.UNCLASSIFIED,
       priority: parsed.priority,
-      justification,
+      justification: parsed.justification,
       status,
       currentApproverRole: submit ? Role.MANAGER : null,
       submittedAt: submit ? new Date() : null,
@@ -132,7 +121,7 @@ export async function createRequisitionAction(formData: FormData) {
   });
 
   revalidatePath("/requisitions");
-  revalidatePath("/dashboard");
+  revalidatePath("/workspaces/requester");
   redirect(`/requisitions/${created.id}`);
 }
 
@@ -150,7 +139,7 @@ export async function submitRequisitionAction(formData: FormData) {
   );
   if (
     !isValidTransition(
-      req!.status as RequisitionStatus,
+      req.status as RequisitionStatus,
       RequisitionStatus.SUBMITTED,
     )
   ) {
@@ -177,6 +166,60 @@ export async function submitRequisitionAction(formData: FormData) {
   revalidatePath("/requisitions");
   revalidatePath("/approvals");
   redirect(`/requisitions/${id}`);
+}
+
+
+const procurementMethodSchema = z.object({
+  id: z.string().min(1),
+  procurementType: z.enum([
+    ProcurementType.DIRECT_PURCHASE,
+    ProcurementType.PREQUALIFIED_SUPPLIER,
+    ProcurementType.QUOTATION,
+    ProcurementType.TENDER,
+    ProcurementType.SOLE_SOURCE,
+  ]),
+});
+
+export async function selectProcurementMethodAction(formData: FormData) {
+  const user = await requireUser();
+  const result = procurementMethodSchema.safeParse({
+    id: formData.get("id"),
+    procurementType: formData.get("procurementType"),
+  });
+  if (!result.success) {
+    redirect("/workspaces/procurement?error=invalid_method");
+  }
+  const parsed = result.data;
+  const req = await prisma.purchaseRequisition.findUnique({
+    where: { id: parsed.id },
+  });
+  if (!req) redirect("/workspaces/procurement?error=missing_request");
+  assertCan(
+    user,
+    "classify",
+    "requisition",
+    { requisition: { requesterId: req.requesterId, status: req.status } },
+    "/workspaces/procurement?denied=1",
+  );
+  const previous = req.procurementType;
+  await prisma.purchaseRequisition.update({
+    where: { id: parsed.id },
+    data: { procurementType: parsed.procurementType },
+  });
+  await logAudit({
+    actorId: user.id,
+    actorRole: user.role as Role,
+    action: "PROCUREMENT_METHOD_SELECTED",
+    entityType: "PurchaseRequisition",
+    entityId: parsed.id,
+    oldValue: previous,
+    newValue: parsed.procurementType,
+    comment: "Procurement Officer classified the purchase method.",
+  });
+  revalidatePath(`/requisitions/${parsed.id}`);
+  revalidatePath("/procurement");
+  revalidatePath("/workspaces/procurement");
+  redirect(`/workspaces/procurement?selected=${parsed.id}`);
 }
 
 const decisionSchema = z.object({
@@ -232,7 +275,12 @@ export async function decideAction(formData: FormData) {
     if (fromStatus === RequisitionStatus.MANAGER_REVIEW) {
       newStatus = RequisitionStatus.PROCUREMENT_REVIEW;
     } else if (fromStatus === RequisitionStatus.PROCUREMENT_REVIEW) {
-      newStatus = RequisitionStatus.FINANCE_REVIEW;
+      if (req!.procurementType === ProcurementType.UNCLASSIFIED) {
+        redirect(`/requisitions/${parsed.id}?error=procurement_method_required`);
+      }
+      newStatus = approvalTier(req!.amount).needsEnhancedThresholdApproval
+        ? RequisitionStatus.FINANCE_REVIEW
+        : RequisitionStatus.PO_CREATED;
     } else if (fromStatus === RequisitionStatus.FINANCE_REVIEW) {
       newStatus = RequisitionStatus.PO_CREATED;
     }
@@ -303,7 +351,7 @@ export async function decideAction(formData: FormData) {
   revalidatePath(`/requisitions/${parsed.id}`);
   revalidatePath("/requisitions");
   revalidatePath("/approvals");
-  revalidatePath("/dashboard");
+  revalidatePath("/workspaces/requester");
   redirect(`/requisitions/${parsed.id}`);
 }
 
@@ -325,7 +373,7 @@ export async function cancelRequisitionAction(formData: FormData) {
   }
   if (
     !isValidTransition(
-      req!.status as RequisitionStatus,
+      req.status as RequisitionStatus,
       RequisitionStatus.CANCELLED,
     )
   ) {
@@ -376,7 +424,7 @@ export async function createPOAction(formData: FormData) {
     user,
     "issuePO",
     "purchaseOrder",
-    { requisition: { requesterId: req!.requesterId, status: req!.status } },
+    { requisition: { requesterId: req.requesterId, status: req.status } },
     `/requisitions/${parsed.requisitionId}?denied=1`,
   );
   if (req.status !== RequisitionStatus.PO_CREATED) {
@@ -392,8 +440,8 @@ export async function createPOAction(formData: FormData) {
       poNumber,
       requisitionId: parsed.requisitionId,
       supplierId: parsed.supplierId,
-      amount: req!.amount,
-      currency: req!.currency,
+      amount: req.amount,
+      currency: req.currency,
       status: POStatus.ISSUED,
       issuedAt: new Date(),
     },
@@ -408,11 +456,13 @@ export async function createPOAction(formData: FormData) {
   });
   revalidatePath(`/requisitions/${parsed.requisitionId}`);
   revalidatePath("/purchase-orders");
+  revalidatePath("/workspaces/procurement");
+  revalidatePath("/workspaces/receiver");
   redirect(`/requisitions/${parsed.requisitionId}`);
 }
 
 const receiptSchema = z.object({
-  requisitionId: z.string().min(1),
+  requisitionId: z.string().optional(),
   purchaseOrderId: z.string().min(1),
   receiptType: z.enum([ReceiptType.GRN, ReceiptType.SAN]),
   notes: z.string().optional(),
@@ -435,29 +485,32 @@ export async function createReceiptAction(formData: FormData) {
     redirect(`/requisitions/${id}?error=invalid`);
   }
   const parsed = result.data;
-  const req = await prisma.purchaseRequisition.findUnique({
-    where: { id: parsed.requisitionId },
+  const po = await prisma.purchaseOrder.findUnique({
+    where: { id: parsed.purchaseOrderId },
+    include: { requisition: true },
   });
-  if (!req) redirect("/requisitions");
+  if (!po) redirect("/receipts?error=missing_po");
+  const req = po.requisition;
+  const requisitionId = req.id;
   assertCan(
     user,
     "create",
     "goodsReceipt",
-    { requisition: { requesterId: req!.requesterId, status: req!.status } },
-    `/requisitions/${parsed.requisitionId}?denied=1`,
+    { requisition: { requesterId: req.requesterId, status: req.status } },
+    `/requisitions/${requisitionId}?denied=1`,
   );
   if (
     !isValidTransition(
-      req!.status as RequisitionStatus,
+      req.status as RequisitionStatus,
       RequisitionStatus.RECEIVED,
     )
   ) {
-    redirect(`/requisitions/${parsed.requisitionId}?invalid=1`);
+    redirect(`/requisitions/${requisitionId}?invalid=1`);
   }
   await prisma.$transaction([
     prisma.goodsReceipt.create({
       data: {
-        requisitionId: parsed.requisitionId,
+        requisitionId,
         purchaseOrderId: parsed.purchaseOrderId,
         receivedById: user.id,
         receiptType: parsed.receiptType,
@@ -467,7 +520,7 @@ export async function createReceiptAction(formData: FormData) {
       },
     }),
     prisma.purchaseRequisition.update({
-      where: { id: parsed.requisitionId },
+      where: { id: requisitionId },
       data: { status: RequisitionStatus.RECEIVED, currentApproverRole: null },
     }),
     prisma.purchaseOrder.update({
@@ -484,10 +537,11 @@ export async function createReceiptAction(formData: FormData) {
     newValue: parsed.receiptType,
     comment: parsed.notes ?? undefined,
   });
-  revalidatePath(`/requisitions/${parsed.requisitionId}`);
+  revalidatePath(`/requisitions/${requisitionId}`);
   revalidatePath("/receipts");
   revalidatePath("/purchase-orders");
-  redirect(`/requisitions/${parsed.requisitionId}`);
+  revalidatePath("/workspaces/receiver");
+  redirect(`/requisitions/${requisitionId}`);
 }
 
 export async function closeRequisitionAction(formData: FormData) {
@@ -504,7 +558,7 @@ export async function closeRequisitionAction(formData: FormData) {
   );
   if (
     !isValidTransition(
-      req!.status as RequisitionStatus,
+      req.status as RequisitionStatus,
       RequisitionStatus.CLOSED,
     )
   ) {

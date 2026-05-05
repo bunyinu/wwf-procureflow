@@ -26,6 +26,7 @@ export type Action =
   | "update"
   | "delete"
   | "submit"
+  | "classify"
   | "decide"
   | "cancel"
   | "issuePO"
@@ -54,34 +55,37 @@ export function can(
     case "requisition": {
       switch (action) {
         case "create":
-          return role === Role.REQUESTER || role === Role.ADMIN;
+          return role === Role.REQUESTER;
         case "read":
           return true;
         case "update":
           return (
-            ctx.requisition?.status === "DRAFT" &&
-            (ctx.requisition.requesterId === user.id || role === Role.ADMIN)
+            (ctx.requisition?.status === "DRAFT" ||
+              ctx.requisition?.status === "RETURNED_FOR_REVISION") &&
+            ctx.requisition.requesterId === user.id
           );
         case "submit":
           return (
             (ctx.requisition?.status === "DRAFT" ||
               ctx.requisition?.status === "RETURNED_FOR_REVISION") &&
-            (ctx.requisition.requesterId === user.id || role === Role.ADMIN)
+            ctx.requisition.requesterId === user.id
           );
+        case "classify": {
+          if (!ctx.requisition) return false;
+          return (
+            role === Role.PROCUREMENT &&
+            ctx.requisition.status === "PROCUREMENT_REVIEW"
+          );
+        }
         case "decide": {
           if (!ctx.requisition) return false;
-          if (role === Role.ADMIN) return true;
           const expected = nextRoleForStatus(ctx.requisition.status as never);
           return expected === role;
         }
         case "cancel":
-          return role === Role.ADMIN;
+          return false;
         case "close":
-          return (
-            role === Role.PROCUREMENT ||
-            role === Role.RECEIVER ||
-            role === Role.ADMIN
-          );
+          return role === Role.PROCUREMENT;
         case "delete":
           return false;
       }
@@ -96,22 +100,22 @@ export function can(
     case "purchaseOrder": {
       if (action === "read") return true;
       if (action === "create" || action === "issuePO")
-        return role === Role.PROCUREMENT || role === Role.ADMIN;
+        return role === Role.PROCUREMENT;
       return false;
     }
 
     case "goodsReceipt": {
       if (action === "read") return true;
       if (action === "create" || action === "receive")
-        return role === Role.RECEIVER || role === Role.ADMIN;
+        return role === Role.RECEIVER;
       return false;
     }
 
     case "supplier": {
       if (action === "read") return true;
       if (action === "create" || action === "update")
-        return role === Role.SUPPLIER_MANAGER || role === Role.ADMIN;
-      if (action === "delete") return role === Role.ADMIN;
+        return role === Role.SUPPLIER_MANAGER;
+      if (action === "delete") return false;
       return false;
     }
 
@@ -155,7 +159,7 @@ export function assertCan(
   action: Action,
   entity: EntityKind,
   ctx: CanContext = {},
-  redirectTo: string = "/dashboard?denied=1",
+  redirectTo: string = "/workspaces?denied=1",
 ): void {
   if (!can(user, action, entity, ctx)) {
     redirect(redirectTo);
@@ -203,6 +207,7 @@ const ACTION_LABEL: Record<Action, string> = {
   update: "Modifier",
   delete: "Supprimer",
   submit: "Soumettre",
+  classify: "Classifier achat",
   decide: "Décider",
   cancel: "Annuler",
   issuePO: "Émettre PO",
@@ -246,7 +251,6 @@ const ROWS: RowDef[] = [
     action: "update",
     conditional: {
       REQUESTER: "ses brouillons",
-      ADMIN: "brouillons uniquement",
     },
   },
   {
@@ -259,10 +263,14 @@ const ROWS: RowDef[] = [
     action: "decide",
     conditional: {
       APPROVER: "étape approbation hiérarchique",
-      PROCUREMENT: "étape classification & analyse offres",
     },
   },
-  { entity: "requisition", action: "cancel" },
+  {
+    entity: "requisition",
+    action: "classify",
+    conditional: { PROCUREMENT: "méthode d’achat" },
+  },
+  { entity: "requisition", action: "cancel", appendOnly: true },
   { entity: "requisition", action: "close" },
   { entity: "requisition", action: "delete", appendOnly: true },
 
@@ -289,7 +297,7 @@ const ROWS: RowDef[] = [
   {
     entity: "supplier",
     action: "delete",
-    conditional: { ADMIN: "si aucun PO" },
+    appendOnly: true,
   },
 
   // User

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, KeyRound, ShieldOff, ShieldCheck } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { assertCan } from "@/lib/permissions";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { Badge } from "@/components/Badge";
@@ -24,7 +24,7 @@ export default async function UserEditPage({
   params: { id: string };
   searchParams: { reset?: string; error?: string };
 }) {
-  const me = await requireUser();
+  const me = await requireRole("ADMIN");
   assertCan(me, "update", "user", {}, "/admin/users?denied=1");
   const [u, departments] = await Promise.all([
     prisma.user.findUnique({ where: { id: params.id } }),

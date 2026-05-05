@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { createRequisitionAction } from "../actions";
-import { PROCUREMENT_TYPE_LABEL, PRIORITY_LABEL } from "@/lib/enums";
+import { PRIORITY_LABEL } from "@/lib/enums";
 import { AttachmentsZone } from "@/components/AttachmentsZone";
 
 export const dynamic = "force-dynamic";
@@ -17,19 +17,15 @@ export default async function NewRequisitionPage({
   const errorMessage = searchParams.error
     ? decodeURIComponent(searchParams.error)
     : null;
-  if (!["REQUESTER", "ADMIN"].includes(user.role)) {
+  if (user.role !== "REQUESTER") {
     redirect("/requisitions?denied=1");
   }
-  const [departments, projects, budgetLines, suppliers] = await Promise.all([
+  const [departments, projects, budgetLines] = await Promise.all([
     prisma.department.findMany({ orderBy: { name: "asc" } }),
     prisma.project.findMany({ orderBy: { name: "asc" } }),
     prisma.budgetLine.findMany({
       include: { project: true },
       orderBy: { code: "asc" },
-    }),
-    prisma.supplier.findMany({
-      where: { status: "PREQUALIFIED" },
-      orderBy: { companyName: "asc" },
     }),
   ]);
 
@@ -65,6 +61,23 @@ export default async function NewRequisitionPage({
                 placeholder="Ex. Achat ordinateurs portables pour équipe terrain"
                 className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-wwf-500 focus:ring-2 focus:ring-wwf-200"
               />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-ink-700">
+                Description
+              </label>
+              <textarea
+                name="description"
+                required
+                rows={3}
+                placeholder="Décrivez précisément les biens ou services demandés."
+                className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm outline-none focus:border-wwf-500 focus:ring-2 focus:ring-wwf-200"
+              />
+            </div>
+
+            <div className="rounded-md border border-sky-100 bg-sky-50/60 px-3 py-2 text-xs text-sky-800">
+              Le numéro de réquisition est généré automatiquement côté serveur au format PR-AAAA-NNNN. Le Demandeur ne choisit ni fournisseur, ni méthode d&apos;achat, ni analyse d&apos;offres.
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
@@ -214,53 +227,6 @@ export default async function NewRequisitionPage({
                   ))}
                 </select>
               </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="text-xs font-medium text-ink-700">
-                  Type de procédure
-                </label>
-                <select
-                  name="procurementType"
-                  defaultValue="DIRECT_PURCHASE"
-                  className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm"
-                >
-                  {Object.entries(PROCUREMENT_TYPE_LABEL).map(([k, v]) => (
-                    <option key={k} value={k}>
-                      {v}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-ink-700">
-                  Date de livraison souhaitée
-                </label>
-                <input
-                  name="expectedDeliveryDate"
-                  type="date"
-                  className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-medium text-ink-700">
-                Fournisseur préféré (optionnel)
-              </label>
-              <select
-                name="supplierPreference"
-                defaultValue=""
-                className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm"
-              >
-                <option value="">— Sans préférence —</option>
-                {suppliers.map((s) => (
-                  <option key={s.id} value={s.companyName}>
-                    {s.companyName}
-                  </option>
-                ))}
-              </select>
             </div>
 
             <div>

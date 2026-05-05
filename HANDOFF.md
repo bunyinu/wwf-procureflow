@@ -26,18 +26,18 @@
 
 Aligned strictly to TDR §4 modules (not job titles). FINANCE is intentionally absent — the PDF doesn't name it; budget validation is folded into the Hierarchical Approver via thresholds.
 
-| # | Rôle | Compte | Workspace | Owns |
+| # | Rôle | Compte | Workspace principal | Owns |
 |---|---|---|---|---|
-| 1 | Demandeur | `requester@tsc.demo` | `/dashboard`, `/requisitions/new`, `/requisitions?scope=mine` | Création/soumission, infos clés (dépt, projet, description, quantité, budget, ligne), pièces jointes |
-| 2 | Approbateur Hiérarchique | `approver@tsc.demo` | `/dashboard`, `/approvals` | Validation hiérarchique selon les seuils, retours, rejets, historique des décisions |
-| 3 | Officier Achats | `procurement@tsc.demo` | `/procurement` (dédié), `/approvals`, `/purchase-orders` | Classification 5 méthodes, analyse offres, attribution marchés, suivi commandes |
-| 4 | Gestionnaire Fournisseurs | `supplier@tsc.demo` | `/suppliers`, `/purchase-orders` | Registre, préqualification, diligence raisonnable, Annexe B |
-| 5 | Réceptionnaire | `receiver@tsc.demo` | `/receipts`, `/purchase-orders` | Bons de réception (GRN), Constats d'acceptation de service (SAN), écarts |
-| 6 | Officier Documents & Audit | `audit@tsc.demo` | `/documents`, `/audit`, `/requisitions` | Archivage sécurisé, recherche rapide, traçabilité, lecture seule absolue |
-| 7 | Responsable Reporting | `reporting@tsc.demo` | `/dashboard`, `/reports` | Tableau de bord interactif, KPI, exports Excel/PDF |
-| 8 | Administrateur | `admin@tsc.demo` | `/admin/*`, oversight sur tout | Utilisateurs, rôles, départements, projets, lignes budgétaires, seuils workflow |
+| 1 | Demandeur | `requester@tsc.demo` | `/workspaces/requester` | Création/soumission, infos clés (dépt, projet, description, quantité, budget, ligne), pièces jointes, numéro auto |
+| 2 | Approbateur Hiérarchique | `approver@tsc.demo` | `/workspaces/approver` | Validation hiérarchique selon les seuils, retours, rejets, historique des décisions |
+| 3 | Officier Achats | `procurement@tsc.demo` | `/workspaces/procurement` | Classification 5 méthodes PDF, analyse offres, attribution marchés, suivi commandes |
+| 4 | Gestionnaire Fournisseurs | `supplier@tsc.demo` | `/workspaces/supplier-manager` | Registre, préqualification, diligence raisonnable, Annexe B, statut fournisseur |
+| 5 | Réceptionnaire | `receiver@tsc.demo` | `/workspaces/receiver` | Bons de réception (GRN), Constats d'acceptation de service (SAN), écarts, preuves |
+| 6 | Officier Documents & Audit | `audit@tsc.demo` | `/workspaces/archive-audit` | Archivage sécurisé, recherche rapide, traçabilité, lecture seule absolue |
+| 7 | Responsable Reporting | `reporting@tsc.demo` | `/workspaces/reporting` | KPI, retards, performance fournisseurs/commandes, exports Excel/PDF |
+| 8 | Administrateur | `admin@tsc.demo` | `/workspaces/admin` | Utilisateurs, rôles, droits, départements, projets, lignes budgétaires, seuils workflow |
 
-**Hard rule** : chaque rôle voit uniquement son workspace dans la sidebar. Aucun rôle ne peut bypass le workflow. Aucun rôle ne peut modifier les enregistrements clos. Le journal d'audit est append-only — y compris pour l'Admin.
+**Hard rule** : chaque rôle voit uniquement son workspace dans la sidebar. `/dashboard` n'est plus un tableau de bord filtré; il redirige seulement vers le workspace du rôle connecté. Aucun rôle ne peut bypass le workflow. Aucun rôle ne peut modifier les enregistrements clos. Le journal d'audit est append-only — y compris pour l'Admin.
 
 ---
 
@@ -46,22 +46,21 @@ Aligned strictly to TDR §4 modules (not job titles). FINANCE is intentionally a
 ```
 DRAFT
  → SUBMITTED                 (Demandeur)
- → MANAGER_REVIEW            (Approbateur · tier 1)
- → PROCUREMENT_REVIEW        (Achats · classification + analyse offres)
- → FINANCE_REVIEW            (Approbateur · tier 2 budgétaire)
+ → MANAGER_REVIEW            (Approbateur hiérarchique · tier 1)
+ → PROCUREMENT_REVIEW        (Achats · classification + méthode PDF + analyse offres)
+ → FINANCE_REVIEW            (Approbateur hiérarchique · seuil renforcé si requis)
  → PO_CREATED                (Achats · attribution + émission PO)
  → RECEIVED                  (Réceptionnaire · GRN/SAN)
- → CLOSED                    (Achats ou auto)
+ → CLOSED                    (Achats)
 
 Branches off-track :
- ↳ RETURNED_FOR_REVISION     (depuis n'importe quelle étape d'approbation)
- ↳ REJECTED                  (depuis n'importe quelle étape d'approbation)
- ↳ CANCELLED                 (Admin uniquement, motif obligatoire)
+ ↳ RETURNED_FOR_REVISION     (correction demandée)
+ ↳ REJECTED                  (rejet motivé)
 ```
 
 **Seuils d'approbation** (configurables dans `/admin/settings`) :
-- < 1 000 USD : Manager_Review + Procurement_Review
-- 1 000–10 000 USD : + Finance_Review
+- < 1 000 USD : revue hiérarchique + revue achats
+- 1 000–10 000 USD : + seuil renforcé par Approbateur hiérarchique
 - > 10 000 USD : + visa Direction (badge visuel)
 
 **Numérotation automatique** : `PR-YYYY-NNNN` pour les réquisitions, `PO-YYYY-NNNN` pour les bons de commande. Généré côté serveur, jamais collidable.
@@ -106,14 +105,15 @@ Définie dans `src/lib/permissions.ts` :
 src/
 ├── app/
 │   ├── (app)/                      # Routes authentifiées (sidebar + topbar)
-│   │   ├── dashboard/              # Per-role dashboard (8 variants)
+│   │   ├── dashboard/              # Redirect uniquement vers /workspaces/<role>
 │   │   ├── requisitions/           # Liste, détail, /new, server actions
 │   │   │   ├── documents/          # Upload action
 │   │   │   ├── new/                # Formulaire création
 │   │   │   ├── [id]/               # Détail + décisions + timeline + SLA + offres
 │   │   │   └── actions.ts          # createRequisitionAction, decideAction, etc.
 │   │   ├── approvals/              # File d'approbation (scopée par rôle)
-│   │   ├── procurement/            # Workspace Achats (3 étapes)
+│   │   ├── workspaces/             # 8 workspaces séparés (requester, approver, procurement, supplier-manager, receiver, archive-audit, reporting, admin)
+│   │   ├── procurement/            # Board Achats (classification + award + tracking)
 │   │   ├── suppliers/              # Registre fournisseurs + détail
 │   │   ├── purchase-orders/        # Liste PO
 │   │   ├── receipts/               # Réceptions GRN/SAN
@@ -192,7 +192,7 @@ Voir `/proof` pour la carte interactive avec liens directs vers chaque preuve. 2
 | §4.2 Étapes obligatoires | ✅ Livré | Machine à états + assertCan() | Système |
 | §4.3 Statuts (en cours/approuvés/rejetés/clôturés) | ✅ Livré | 11 statuts · badges colorés · filtres | Tous |
 | §4.3 Suivi délais par étape | ★ Renforcé | SlaPanel par requisition + SLA configurable | Tous |
-| §4.3 Identification des retards | ★ Renforcé | Badge "SLA dépassé" + tile dashboard | Approbateurs |
+| §4.3 Identification des retards | ★ Renforcé | Badge "SLA dépassé" + panels Reporting/Approver | Approbateurs · Reporting |
 | §4.4 Classification 5 types | ✅ Livré | Direct, Préqualifié, Cotations, Appel d'offres, Source unique | Achats |
 | §4.4 Définition étapes & responsabilités | ★ Renforcé | Matrice droits explicite dans `/admin/settings` | Admin |
 | §4.4 Analyse des offres | ★ Renforcé | QuoteAnalysis : tableau comparatif tech + financier | Achats |
@@ -204,7 +204,7 @@ Voir `/proof` pour la carte interactive avec liens directs vers chaque preuve. 2
 | §4.6 Observations + justificatifs | ✅ Livré | Notes + écarts + AttachmentsZone | Réceptionnaire |
 | §4.7 Archivage sécurisé + droits | ✅ Livré | Documents par dossier + matrice droits | Système + Admin |
 | §4.7 Recherche rapide documents | ★ Renforcé | `/documents` plein texte + facettes | Tous |
-| §4.8 Tableau de bord interactif + KPI | ★ Renforcé | 8 dashboards distincts (1 par rôle) | Tous |
+| §4.8 Tableau de bord interactif + KPI | ★ Renforcé | 8 workspaces distincts (1 par rôle) + Reporting KPI | Tous |
 | §4.8 Suivi délais traitement | ✅ Livré | Tile "Respect des SLA" + sparkline cycle | Reporting |
 | §4.8 Export Excel + PDF | ✅ Livré | 3 exports CSV + 5 PDFs premium | Reporting |
 | §4.9 Profils + droits + traçabilité | ✅ Livré | `/admin/users` CRUD + matrice + audit log | Admin · Auditeur |
@@ -235,6 +235,8 @@ npm run db:reset
 Auto-deploy à chaque `git push origin main`. Le `buildCommand` :
 ```bash
 npm install \
+  && npm run lint \
+  && npm test \
   && npx prisma generate \
   && npx prisma db push --accept-data-loss --skip-generate \
   && npx tsx prisma/seed.ts \
@@ -353,20 +355,20 @@ Voir `/architecture` (page publique) pour le détail.
 ## 11. Évolutions immédiates suggérées (post-démo)
 
 Par ordre de valeur :
-1. **Workspace Receveur enrichi** : actuellement /receipts est OK mais pourrait avoir un mode "scanner / mobile" pour les missions terrain.
+1. **Workspace Receveur enrichi** : actuellement `/workspaces/receiver` et `/receipts` sont OK mais pourraient avoir un mode "scanner / mobile" pour les missions terrain.
 2. **Workflow editor visuel** dans `/admin/settings` (drag-drop des étapes) — pré-câblage Camunda.
 3. **Module RFQ complet** : actuellement les quotes sont seedées; ajouter "lancer une consultation" qui envoie aux fournisseurs préqualifiés et collecte leurs réponses.
 4. **Délégation temporaire** : un Approbateur en congé peut désigner un suppléant.
 5. **Notifications réelles** : intégrer Mailjet/Sendgrid SMTP pour envoyer vraiment.
 6. **Multi-langue** : EN en plus de FR (le code est prêt, juste à externaliser les strings).
-7. **Tests automatisés** : aucun test pour le moment — ajouter Playwright pour les parcours critiques.
+7. **Tests automatisés** : `scripts/workspace-contract.test.ts` couvre la séparation des 8 workspaces; ajouter Playwright pour les parcours critiques.
 8. **Observability** : logs structurés + traces OpenTelemetry vers Grafana.
 
 ---
 
 ## 12. Anomalies / dette technique connues
 
-- **`/finance/budget` et `/finance/cashflow`** : pages héritées de la période où Finance était un rôle distinct. Toujours accessibles à l'Admin via URL directe mais plus dans la sidebar de personne. À supprimer ou rebrancher si Finance redevient un rôle.
+- **`/finance/budget` et `/finance/cashflow`** : pages héritées de la période où Finance était un rôle distinct. Elles sont désormais accessibles au rôle Reporting uniquement, hors sidebar principale. À supprimer ou fusionner dans `/workspaces/reporting` si elles deviennent redondantes.
 - **Cross-region DB** : la DB `appeal-control-db` (paid, Virginia) est connectée à `wwf-procureflow.onrender.com` (Frankfurt) via SSL externe. La connexion fonctionne mais la latence est ~150ms par requête. Le déploiement utilise actuellement `soko-db` (free, même région) qui est plus rapide.
 - **Build SSR + next/font** : le build Render fait des requêtes externes vers `fonts.googleapis.com`. Si le réseau Render bloque temporairement, le build retry 3× puis utilise les fallbacks système. Pas bloquant en pratique.
 - **`prisma db push` au build** : non destructif sauf en cas de changement schema incompatible. Le seed clear+reseed à chaque deploy. À retirer pour la prod (utiliser `migrate deploy`).

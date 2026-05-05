@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { EmptyState } from "@/components/EmptyState";
@@ -17,7 +17,7 @@ import { AttachmentsZone } from "@/components/AttachmentsZone";
 export const dynamic = "force-dynamic";
 
 export default async function ReceiptsPage() {
-  const user = await requireUser();
+  const user = await requireRole("RECEIVER");
   const [receipts, openPOs] = await Promise.all([
     prisma.goodsReceipt.findMany({
       include: {
@@ -33,7 +33,7 @@ export default async function ReceiptsPage() {
       orderBy: { issuedAt: "asc" },
     }),
   ]);
-  const canRecord = ["PROCUREMENT", "ADMIN"].includes(user.role);
+  const canRecord = user.role === "RECEIVER";
 
   return (
     <div className="space-y-5">
@@ -134,7 +134,7 @@ export default async function ReceiptsPage() {
           <CardBody>
             {!canRecord ? (
               <p className="text-xs text-ink-500">
-                Seuls les rôles Achats et Administrateur peuvent enregistrer
+                Seul le rôle Réceptionnaire peut enregistrer
                 une réception.
               </p>
             ) : openPOs.length === 0 ? (
@@ -149,7 +149,7 @@ export default async function ReceiptsPage() {
                     Bon de commande
                   </label>
                   <select
-                    name="poSelector"
+                    name="purchaseOrderId"
                     required
                     className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 shadow-sm"
                     defaultValue={openPOs[0].id}
@@ -162,27 +162,8 @@ export default async function ReceiptsPage() {
                     ))}
                   </select>
                 </div>
-                {/* For the prototype, embed the first open PO as default IDs */}
-                <input
-                  type="hidden"
-                  name="purchaseOrderId"
-                  value={openPOs[0].id}
-                />
-                <input
-                  type="hidden"
-                  name="requisitionId"
-                  value={openPOs[0].requisitionId}
-                />
                 <p className="text-[11px] text-ink-500">
-                  Pour ce prototype, le formulaire applique le PO le plus
-                  ancien (
-                  <Link
-                    href={`/requisitions/${openPOs[0].requisitionId}`}
-                    className="text-wwf-700 underline"
-                  >
-                    voir le détail
-                  </Link>
-                  ). La gestion fine se fait depuis chaque réquisition.
+                  Le réquisitionId est dérivé côté serveur depuis le PO sélectionné pour éviter toute incohérence formulaire.
                 </p>
                 <div>
                   <label className="text-xs font-medium text-ink-700">

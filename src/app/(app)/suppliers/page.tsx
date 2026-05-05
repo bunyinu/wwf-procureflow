@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { ShieldCheck } from "lucide-react";
@@ -18,11 +18,11 @@ import { formatDate } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 export default async function SuppliersPage() {
-  const user = await requireUser();
+  const user = await requireRole("SUPPLIER_MANAGER");
   const suppliers = await prisma.supplier.findMany({
     orderBy: { companyName: "asc" },
   });
-  const canCreate = ["PROCUREMENT", "ADMIN"].includes(user.role);
+  const canCreate = user.role === "SUPPLIER_MANAGER";
 
   return (
     <div className="space-y-5">

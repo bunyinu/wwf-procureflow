@@ -29,8 +29,7 @@ export default async function RequisitionsPage({
 }) {
   const user = await requireUser();
 
-  // Role-scoped baseline filter. Requesters only see their own dossiers;
-  // managers default to dossiers in their scope unless explicitly broader.
+  // Role-scoped baseline filter. Requesters only see their own dossiers; other workflow roles get read-only operational scope.
   const role = user.role as string;
   const scopeMine = searchParams.scope === "mine" || role === "REQUESTER";
   const baseScope = scopeMine ? { requesterId: user.id } : {};
@@ -67,7 +66,7 @@ export default async function RequisitionsPage({
     orderBy: { updatedAt: "desc" },
   });
 
-  const canCreate = ["REQUESTER", "ADMIN"].includes(role);
+  const canCreate = role === "REQUESTER";
 
   return (
     <div className="space-y-5">

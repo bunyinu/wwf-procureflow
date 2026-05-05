@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { SESSION_COOKIE } from "@/lib/auth";
+import { workspaceHomeForRole } from "@/lib/workspaces";
 
 export async function loginAction(formData: FormData): Promise<void> {
   const email = String(formData.get("email") || "")
@@ -22,7 +23,7 @@ export async function loginAction(formData: FormData): Promise<void> {
     path: "/",
     maxAge: 60 * 60 * 8,
   });
-  redirect("/dashboard");
+  redirect(workspaceHomeForRole(user.role));
 }
 
 export async function quickLoginAction(formData: FormData): Promise<void> {
@@ -37,7 +38,7 @@ export async function quickLoginAction(formData: FormData): Promise<void> {
     path: "/",
     maxAge: 60 * 60 * 8,
   });
-  redirect("/dashboard");
+  redirect(workspaceHomeForRole(user.role));
 }
 
 export async function logoutAction(): Promise<void> {

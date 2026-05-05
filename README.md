@@ -16,7 +16,7 @@ par WWF-RDC le 30 avril 2026.
 
 - **Next.js 14** (App Router) + **TypeScript** + **Tailwind CSS**
 - **Prisma ORM** + **PostgreSQL** (local via Docker, prod sur Render)
-- Auth démo par cookie (à remplacer par Keycloak en production)
+- Auth démo par cookie avec routage vers 8 workspaces distincts (à remplacer par Keycloak en production)
 - **Recharts** pour les graphiques, **Lucide** pour les icônes
 - Polices : **Inter** (UI) + **Lora** (titres et PDFs)
 
@@ -51,14 +51,16 @@ npm run build && npm run start
 
 Mot de passe commun : **`demo123`**.
 
-| Rôle                  | E-mail                  |
-|-----------------------|-------------------------|
-| Demandeur             | requester@tsc.demo      |
-| Manager Approbateur   | manager@tsc.demo        |
-| Officier Achats       | procurement@tsc.demo    |
-| Approbateur Finance   | finance@tsc.demo        |
-| Auditeur (lecture)    | auditor@tsc.demo        |
-| Administrateur        | admin@tsc.demo          |
+| Rôle / workspace                 | E-mail                  | Route |
+|----------------------------------|-------------------------|-------|
+| Requester Workspace              | requester@tsc.demo      | /workspaces/requester |
+| Hierarchical Approver Workspace  | approver@tsc.demo       | /workspaces/approver |
+| Procurement Officer Workspace    | procurement@tsc.demo    | /workspaces/procurement |
+| Supplier Manager Workspace       | supplier@tsc.demo       | /workspaces/supplier-manager |
+| Receiver Workspace               | receiver@tsc.demo       | /workspaces/receiver |
+| Archive & Audit Workspace        | audit@tsc.demo          | /workspaces/archive-audit |
+| Reporting Workspace              | reporting@tsc.demo      | /workspaces/reporting |
+| Admin Workspace                  | admin@tsc.demo          | /workspaces/admin |
 
 ---
 
@@ -92,8 +94,7 @@ Première mise en ligne automatique, redéploiements à chaque push.
 | §4.9 Profils + droits d'accès + traçabilité actions | ✅ |
 | Annexe B Lettre de certification anti-corruption | ✅ Module fournisseurs |
 
-Page `/proof` : carte de conformité TDR avec liens directs vers chaque
-fonctionnalité.
+Les routes `/workspaces/*` sont les surfaces opérationnelles distinctes; `/dashboard` redirige seulement vers le workspace du rôle connecté.
 
 ---
 

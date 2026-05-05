@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import type { Role } from "@/lib/enums";
+import { workspaceHomeForRole } from "@/lib/workspaces";
 import type { User } from "@prisma/client";
 
 export const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME || "tsc_session";
@@ -22,7 +23,7 @@ export async function requireUser(): Promise<User> {
 export async function requireRole(...roles: Role[]): Promise<User> {
   const u = await requireUser();
   if (!roles.includes(u.role as Role)) {
-    redirect("/dashboard?denied=1");
+    redirect(`${workspaceHomeForRole(u.role)}?denied=1`);
   }
   return u;
 }

@@ -17,12 +17,14 @@ import {
 import { CongoMotif } from "@/components/CongoMotif";
 
 const demoAccounts = [
-  { role: "Demandeur", email: "requester@tsc.demo" },
-  { role: "Manager Approbateur", email: "manager@tsc.demo" },
-  { role: "Officier Achats", email: "procurement@tsc.demo" },
-  { role: "Approbateur Finance", email: "finance@tsc.demo" },
-  { role: "Auditeur (lecture)", email: "auditor@tsc.demo" },
-  { role: "Administrateur", email: "admin@tsc.demo" },
+  { role: "Requester Workspace", email: "requester@tsc.demo" },
+  { role: "Hierarchical Approver", email: "approver@tsc.demo" },
+  { role: "Procurement Officer", email: "procurement@tsc.demo" },
+  { role: "Supplier Manager", email: "supplier@tsc.demo" },
+  { role: "Receiver", email: "receiver@tsc.demo" },
+  { role: "Archive & Audit", email: "audit@tsc.demo" },
+  { role: "Reporting", email: "reporting@tsc.demo" },
+  { role: "Admin", email: "admin@tsc.demo" },
 ];
 
 const trustBadges = [
@@ -37,7 +39,7 @@ const valueProps = [
     icon: Workflow,
     title: "Circuit de validation institutionnel",
     description:
-      "Cycle Manager → Achats → Finance verrouillé côté serveur, retours et rejets motivés, visa Direction au-delà de 10 000 USD.",
+      "Cycle Demandeur → Approbateur → Achats → Fournisseurs → Réception → Audit/Reporting verrouillé côté serveur, avec seuils configurables.",
   },
   {
     icon: ShieldCheck,
@@ -49,24 +51,24 @@ const valueProps = [
     icon: Gauge,
     title: "Pilotage temps réel",
     description:
-      "Tableau de bord exécutif et rapports filtrés : cycle, valeur engagée, retards, exceptions budgétaires, respect des SLA.",
+      "Workspace Reporting et rapports filtrés : cycle, valeur engagée, retards, exceptions budgétaires, respect des SLA.",
   },
   {
     icon: Lock,
     title: "Séparation des fonctions",
     description:
-      "Six rôles fonctionnels avec matrice de droits explicite, infalsifiable sur les évènements critiques. Pré-intégration Keycloak SSO / authentification forte.",
+      "Huit workspaces fonctionnels avec matrice de droits explicite, infalsifiable sur les évènements critiques. Pré-intégration Keycloak SSO / authentification forte.",
   },
 ];
 
 const circuitSteps = [
   { n: 1, label: "Réquisition saisie par le demandeur", icon: FileSignature },
-  { n: 2, label: "Validation managériale", icon: ShieldCheck },
-  { n: 3, label: "Revue achats et sélection fournisseur", icon: ClipboardList },
-  { n: 4, label: "Approbation finance et engagement budgétaire", icon: Lock },
-  { n: 5, label: "Émission du bon de commande", icon: Workflow },
+  { n: 2, label: "Validation hiérarchique par seuil", icon: ShieldCheck },
+  { n: 3, label: "Classification achats", icon: ClipboardList },
+  { n: 4, label: "Préqualification fournisseur", icon: Lock },
+  { n: 5, label: "Analyse offres + attribution + PO", icon: Workflow },
   { n: 6, label: "Réception biens / services (GRN / SAN)", icon: ShieldCheck },
-  { n: 7, label: "Clôture, archivage et reporting", icon: ScrollText },
+  { n: 7, label: "Archivage, audit et reporting", icon: ScrollText },
 ];
 
 const proposalLinks = [
@@ -195,7 +197,7 @@ export default function DemoPage() {
 
             <div className="mt-8 grid grid-cols-3 gap-4 text-sm">
               <BigStat label="Étapes du circuit" value="7" />
-              <BigStat label="Rôles fonctionnels" value="6" />
+              <BigStat label="Workspaces distincts" value="8" />
               <BigStat label="Évènements audités" value="100 %" />
             </div>
           </div>
@@ -294,7 +296,7 @@ export default function DemoPage() {
               Comptes de démonstration
             </h2>
             <p className="mt-1 text-xs text-ink-500">
-              Six profils — chaque rôle voit une interface adaptée à ses
+              Huit profils — chaque rôle voit son workspace dédié à ses
               responsabilités. Mot de passe commun :{" "}
               <span className="font-mono text-ink-800">demo123</span>.
             </p>

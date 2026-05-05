@@ -8,7 +8,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { TypeBars } from "@/components/charts/TypeBars";
@@ -22,7 +22,7 @@ import { formatCurrency } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 export default async function ReportsPage() {
-  await requireUser();
+  await requireRole("REPORTING");
   const [requisitions, suppliers, budgetLines, projects, departments] =
     await Promise.all([
       prisma.purchaseRequisition.findMany({

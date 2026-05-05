@@ -8,7 +8,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { Stat } from "@/components/Stat";
 import { Badge } from "@/components/Badge";
@@ -18,7 +18,7 @@ import { formatCurrency } from "@/lib/format";
 export const dynamic = "force-dynamic";
 
 export default async function FinanceBudgetPage() {
-  await requireUser();
+  await requireRole("REPORTING");
   const [budgetLines, requisitions] = await Promise.all([
     prisma.budgetLine.findMany({
       include: { project: true },

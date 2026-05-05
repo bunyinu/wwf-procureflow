@@ -1,7 +1,8 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import {
@@ -37,7 +38,7 @@ export default async function SupplierDetail({
 }: {
   params: { id: string };
 }) {
-  const user = await requireUser();
+  const user = await requireRole("SUPPLIER_MANAGER");
   const supplier = await prisma.supplier.findUnique({
     where: { id: params.id },
     include: {
@@ -48,7 +49,7 @@ export default async function SupplierDetail({
     },
   });
   if (!supplier) notFound();
-  const canEdit = ["PROCUREMENT", "ADMIN"].includes(user.role);
+  const canEdit = user.role === "SUPPLIER_MANAGER";
 
   return (
     <div className="space-y-5">
@@ -278,7 +279,7 @@ export default async function SupplierDetail({
               </form>
             ) : (
               <p className="text-xs text-ink-500">
-                Seuls les rôles Achats et Administrateur peuvent modifier le
+                Seul le Gestionnaire Fournisseurs peut modifier le
                 statut.
               </p>
             )}
@@ -294,7 +295,7 @@ function Field({
   value,
 }: {
   label: string;
-  value: React.ReactNode;
+  value: ReactNode;
 }) {
   return (
     <div>

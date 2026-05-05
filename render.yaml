@@ -7,7 +7,7 @@ services:
     branch: main
     # Free tier does not support preDeployCommand, so we push schema + seed
     # as part of the build (DATABASE_URL is available at build time on Render).
-    buildCommand: npm install && npx prisma generate && npx prisma db push --accept-data-loss --skip-generate && npx tsx prisma/seed.ts && npx next build
+    buildCommand: npm install && npm run lint && npm test && npx prisma generate && npx prisma db push --accept-data-loss --skip-generate && npx tsx prisma/seed.ts && npx next build
     startCommand: npm run start
     healthCheckPath: /demo
     autoDeploy: true

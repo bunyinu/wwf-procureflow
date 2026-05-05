@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { Card, CardBody, CardHeader } from "@/components/Card";
 import { StatusBadge } from "@/components/StatusBadge";
 import { PriorityBadge } from "@/components/PriorityBadge";
@@ -15,11 +15,10 @@ const STATUSES_BY_ROLE: Partial<Record<Role, string[]>> = {
   // APPROVER absorbs both Manager and Finance hierarchical tiers
   APPROVER: ["MANAGER_REVIEW", "FINANCE_REVIEW", "SUBMITTED"],
   PROCUREMENT: ["PROCUREMENT_REVIEW"],
-  ADMIN: ["MANAGER_REVIEW", "PROCUREMENT_REVIEW", "FINANCE_REVIEW", "SUBMITTED"],
 };
 
 export default async function ApprovalsPage() {
-  const user = await requireUser();
+  const user = await requireRole("APPROVER", "PROCUREMENT");
   const role = user.role as Role;
   const statuses = STATUSES_BY_ROLE[role] ?? [];
 
