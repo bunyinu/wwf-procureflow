@@ -42,8 +42,8 @@ export const TRANSITIONS: Partial<Record<RequisitionStatus, RequisitionStatus[]>
   SUBMITTED: ["MANAGER_REVIEW"],
   MANAGER_REVIEW: ["PROCUREMENT_REVIEW", "REJECTED", "RETURNED_FOR_REVISION"],
   RETURNED_FOR_REVISION: ["DRAFT"],
-  PROCUREMENT_REVIEW: ["FINANCE_REVIEW", "REJECTED"],
-  // Finance may return a dossier with an explicit budget exception flag.
+  // Any reviewer (Manager, Achats, Finance) can return for revision.
+  PROCUREMENT_REVIEW: ["FINANCE_REVIEW", "REJECTED", "RETURNED_FOR_REVISION"],
   FINANCE_REVIEW: ["PO_CREATED", "REJECTED", "RETURNED_FOR_REVISION"],
   PO_CREATED: ["RECEIVED"],
   RECEIVED: ["CLOSED"],

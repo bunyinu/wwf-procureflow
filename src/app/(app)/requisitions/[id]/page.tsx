@@ -317,6 +317,7 @@ export default async function RequisitionDetail({
                       Approuver
                     </button>
                     {req.status === "MANAGER_REVIEW" ||
+                    req.status === "PROCUREMENT_REVIEW" ||
                     req.status === "FINANCE_REVIEW" ? (
                       <button
                         type="submit"

@@ -117,10 +117,10 @@ export default async function SuppliersPage() {
           </Card>
         </div>
 
+        {canCreate ? (
         <Card>
           <CardHeader title="Ajouter un fournisseur" />
           <CardBody>
-            {canCreate ? (
               <form action={createSupplierAction} className="space-y-3 text-sm">
                 <input
                   name="companyName"
@@ -193,19 +193,14 @@ export default async function SuppliersPage() {
                 </div>
                 <button
                   type="submit"
-                  className="w-full rounded-md bg-wwf-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-wwf-700"
+                  className="w-full rounded-md bg-wwf-700 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-wwf-800"
                 >
                   Enregistrer le fournisseur
                 </button>
               </form>
-            ) : (
-              <p className="text-xs text-ink-500">
-                La création de fournisseurs est réservée aux rôles Achats et
-                Administrateur.
-              </p>
-            )}
           </CardBody>
         </Card>
+        ) : null}
       </div>
     </div>
   );

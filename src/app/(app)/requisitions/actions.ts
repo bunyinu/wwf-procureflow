@@ -241,6 +241,7 @@ export async function decideAction(formData: FormData) {
   } else if (parsed.decision === ApprovalDecision.RETURNED) {
     if (
       fromStatus === RequisitionStatus.MANAGER_REVIEW ||
+      fromStatus === RequisitionStatus.PROCUREMENT_REVIEW ||
       fromStatus === RequisitionStatus.FINANCE_REVIEW
     ) {
       newStatus = RequisitionStatus.RETURNED_FOR_REVISION;
