@@ -32,7 +32,7 @@ import {
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
 import { can } from "@/lib/permissions";
 import { documentCategoriesForRequisitionUpload } from "@/lib/document-permissions";
-import { workspaceHomeForRole } from "@/lib/workspaces";
+import { PROCUREMENT_METHODS_FROM_PDF, workspaceHomeForRole } from "@/lib/workspaces";
 import {
   cancelRequisitionAction,
   closeRequisitionAction,
@@ -320,6 +320,33 @@ export default async function RequisitionDetail({
               <CardBody>
                 <form action={decideAction} className="space-y-3">
                   <input type="hidden" name="id" value={req.id} />
+                  {isProcurementStep ? (
+                    <div className="rounded-md border border-purple-100 bg-purple-50/40 p-3">
+                      <label className="text-xs font-medium text-ink-700">
+                        Méthode d&apos;achat
+                      </label>
+                      <select
+                        name="procurementType"
+                        defaultValue={
+                          req.procurementType === "UNCLASSIFIED"
+                            ? ""
+                            : req.procurementType
+                        }
+                        className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm"
+                      >
+                        <option value="">Choisir une méthode avant validation</option>
+                        {PROCUREMENT_METHODS_FROM_PDF.map((method) => (
+                          <option key={method.value} value={method.value}>
+                            {method.label}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="mt-1 text-[11px] text-ink-500">
+                        La validation Achats enregistre la méthode puis route
+                        le dossier vers le seuil renforcé ou le bon de commande.
+                      </p>
+                    </div>
+                  ) : null}
                   <textarea
                     name="comment"
                     rows={3}

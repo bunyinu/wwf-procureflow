@@ -17,7 +17,7 @@ import {
   RequisitionStatus,
   ReceiptType,
 } from "@/lib/enums";
-import { approvalTier, isValidTransition, nextRoleForStatus } from "@/lib/workflow";
+import { isValidTransition, nextRoleForStatus, resolveApprovedDecisionStatus } from "@/lib/workflow";
 
 async function nextRequisitionNumber(): Promise<string> {
   const last = await prisma.purchaseRequisition.findFirst({
@@ -233,6 +233,15 @@ const decisionSchema = z.object({
   ]),
   comment: z.string().optional(),
   budgetException: z.string().optional(),
+  procurementType: z
+    .enum([
+      ProcurementType.DIRECT_PURCHASE,
+      ProcurementType.PREQUALIFIED_SUPPLIER,
+      ProcurementType.QUOTATION,
+      ProcurementType.TENDER,
+      ProcurementType.SOLE_SOURCE,
+    ])
+    .optional(),
 });
 
 export async function decideAction(formData: FormData) {
@@ -242,6 +251,7 @@ export async function decideAction(formData: FormData) {
     decision: formData.get("decision"),
     comment: formData.get("comment") || "",
     budgetException: formData.get("budgetException") as string,
+    procurementType: optionalFormString(formData.get("procurementType")),
   });
   if (!result.success) {
     const id = String(formData.get("id") ?? "");
@@ -271,21 +281,26 @@ export async function decideAction(formData: FormData) {
 
   const role = user.role as Role;
   const fromStatus = req!.status as RequisitionStatus;
+  const selectedProcurementType =
+    fromStatus === RequisitionStatus.PROCUREMENT_REVIEW
+      ? parsed.procurementType ?? (req!.procurementType as ProcurementType)
+      : (req!.procurementType as ProcurementType);
 
   let newStatus: RequisitionStatus | null = null;
   if (parsed.decision === ApprovalDecision.APPROVED) {
-    if (fromStatus === RequisitionStatus.HIERARCHICAL_REVIEW) {
-      newStatus = RequisitionStatus.PROCUREMENT_REVIEW;
-    } else if (fromStatus === RequisitionStatus.PROCUREMENT_REVIEW) {
-      if (req!.procurementType === ProcurementType.UNCLASSIFIED) {
-        redirect(`/requisitions/${parsed.id}?error=procurement_method_required`);
-      }
-      newStatus = approvalTier(req!.amount).needsEnhancedThresholdApproval
-        ? RequisitionStatus.THRESHOLD_REVIEW
-        : RequisitionStatus.PO_CREATED;
-    } else if (fromStatus === RequisitionStatus.THRESHOLD_REVIEW) {
-      newStatus = RequisitionStatus.PO_CREATED;
+    const resolution = resolveApprovedDecisionStatus({
+      fromStatus,
+      amount: req!.amount,
+      procurementType: selectedProcurementType,
+    });
+    if (!resolution.ok) {
+      redirect(
+        resolution.error === "procurement_method_required"
+          ? `/requisitions/${parsed.id}?error=procurement_method_required`
+          : `/requisitions/${parsed.id}?invalid=1`,
+      );
     }
+    newStatus = resolution.newStatus;
   } else if (parsed.decision === ApprovalDecision.REJECTED) {
     newStatus = RequisitionStatus.REJECTED;
   } else if (parsed.decision === ApprovalDecision.RETURNED) {
@@ -305,6 +320,10 @@ export async function decideAction(formData: FormData) {
   }
 
   const nextRole = nextRoleForStatus(newStatus);
+  const shouldPersistProcurementType =
+    parsed.decision === ApprovalDecision.APPROVED &&
+    fromStatus === RequisitionStatus.PROCUREMENT_REVIEW &&
+    selectedProcurementType !== req!.procurementType;
   await prisma.$transaction([
     prisma.approval.create({
       data: {
@@ -322,9 +341,25 @@ export async function decideAction(formData: FormData) {
       data: {
         status: newStatus,
         currentApproverRole: nextRole,
+        ...(shouldPersistProcurementType
+          ? { procurementType: selectedProcurementType }
+          : {}),
       },
     }),
   ]);
+
+  if (shouldPersistProcurementType) {
+    await logAudit({
+      actorId: user.id,
+      actorRole: role,
+      action: "PROCUREMENT_METHOD_SELECTED",
+      entityType: "PurchaseRequisition",
+      entityId: parsed.id,
+      oldValue: req!.procurementType,
+      newValue: selectedProcurementType,
+      comment: "Procurement Officer classified the purchase method during process validation.",
+    });
+  }
 
   const isBudgetException =
     parsed.budgetException === "on" &&

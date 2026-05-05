@@ -17,6 +17,7 @@ import {
   workspaceHomeForRole,
 } from "../src/lib/workspaces";
 import { PROCUREMENT_TYPE_LABEL } from "../src/lib/enums";
+import { isValidTransition, resolveApprovedDecisionStatus } from "../src/lib/workflow";
 
 const roles = [
   Role.REQUESTER,
@@ -149,6 +150,31 @@ assert.deepEqual(
 assert.equal(PROCUREMENT_TYPE_LABEL[ProcurementType.UNCLASSIFIED], "À classifier par Achats");
 assert.equal(PROCUREMENT_TYPE_LABEL[ProcurementType.QUOTATION], "Cotations multiples");
 assert.equal(PROCUREMENT_TYPE_LABEL[ProcurementType.SOLE_SOURCE], "Source unique");
+assert.deepEqual(
+  resolveApprovedDecisionStatus({
+    fromStatus: "PROCUREMENT_REVIEW",
+    amount: 1850,
+    procurementType: ProcurementType.UNCLASSIFIED,
+  }),
+  { ok: false, error: "procurement_method_required" },
+  "procurement approval must require a selected purchase method",
+);
+const procurementApproval = resolveApprovedDecisionStatus({
+  fromStatus: "PROCUREMENT_REVIEW",
+  amount: 1850,
+  procurementType: ProcurementType.QUOTATION,
+});
+assert.deepEqual(
+  procurementApproval,
+  { ok: true, newStatus: "THRESHOLD_REVIEW" },
+  "procurement approval with a method must route to the threshold step when amount requires it",
+);
+assert.equal(
+  procurementApproval.ok &&
+    isValidTransition("PROCUREMENT_REVIEW", procurementApproval.newStatus),
+  true,
+  "procurement approval route must be a valid workflow transition",
+);
 
 const actor = (role: string) => ({ id: `${role.toLowerCase()}-id`, role });
 const ownDraft = { requisition: { requesterId: "requester-id", status: "DRAFT" } };

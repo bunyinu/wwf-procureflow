@@ -1,4 +1,4 @@
-import { Role, RequisitionStatus } from "@/lib/enums";
+import { ProcurementType, Role, RequisitionStatus } from "@/lib/enums";
 
 export const STATUS_LABELS: Record<RequisitionStatus, string> = {
   DRAFT: "Brouillon",
@@ -99,6 +99,43 @@ export function approvalTier(amountUSD: number): {
     needsEnhancedThresholdApproval: true,
     needsDirectorFlag: true,
   };
+}
+
+export type ApprovedDecisionResolution =
+  | { ok: true; newStatus: RequisitionStatus }
+  | { ok: false; error: "procurement_method_required" | "invalid" };
+
+export function resolveApprovedDecisionStatus({
+  fromStatus,
+  amount,
+  procurementType,
+}: {
+  fromStatus: RequisitionStatus;
+  amount: number;
+  procurementType?: ProcurementType | null;
+}): ApprovedDecisionResolution {
+  if (fromStatus === RequisitionStatus.HIERARCHICAL_REVIEW) {
+    return { ok: true, newStatus: RequisitionStatus.PROCUREMENT_REVIEW };
+  }
+
+  if (fromStatus === RequisitionStatus.PROCUREMENT_REVIEW) {
+    if (!procurementType || procurementType === ProcurementType.UNCLASSIFIED) {
+      return { ok: false, error: "procurement_method_required" };
+    }
+
+    return {
+      ok: true,
+      newStatus: approvalTier(amount).needsEnhancedThresholdApproval
+        ? RequisitionStatus.THRESHOLD_REVIEW
+        : RequisitionStatus.PO_CREATED,
+    };
+  }
+
+  if (fromStatus === RequisitionStatus.THRESHOLD_REVIEW) {
+    return { ok: true, newStatus: RequisitionStatus.PO_CREATED };
+  }
+
+  return { ok: false, error: "invalid" };
 }
 
 export function nextRoleForStatus(status: RequisitionStatus): Role | null {
