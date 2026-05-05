@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { DocumentCategory, Role } from "@/lib/enums";
+import { canUploadRequisitionDocument } from "@/lib/document-permissions";
 
 const attachSchema = z.object({
   requisitionId: z.string().min(1),
@@ -38,6 +39,20 @@ export async function attachDocumentAction(formData: FormData) {
     );
   }
   const parsed = result.data;
+  const requisition = await prisma.purchaseRequisition.findUnique({
+    where: { id: parsed.requisitionId },
+    select: { requesterId: true, status: true },
+  });
+  if (!requisition) redirect("/requisitions?error=not_found");
+  if (
+    !canUploadRequisitionDocument(
+      user,
+      requisition,
+      parsed.documentCategory,
+    )
+  ) {
+    redirect(`/requisitions/${parsed.requisitionId}?denied=1`);
+  }
   const created = await prisma.document.create({
     data: {
       requisitionId: parsed.requisitionId,

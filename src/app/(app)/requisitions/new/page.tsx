@@ -242,7 +242,7 @@ export default async function NewRequisitionPage({
               />
             </div>
 
-            <AttachmentsZone hint="Catégories prévues : devis, contrat, facture, justification, pièce d'identité." />
+            <AttachmentsZone hint="Après enregistrement uniquement : devis, contrat, facture, justification, GRN, SAN ou autre." />
 
             <div className="flex flex-wrap gap-3 pt-2">
               <button

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { Card, CardBody, CardHeader } from "@/components/Card";
@@ -21,6 +21,7 @@ import {
   type POStatus,
   type ReceiptType,
   type DocumentCategory,
+  type Role,
 } from "@/lib/enums";
 import {
   approvalTier,
@@ -29,6 +30,9 @@ import {
   ROLE_LABELS,
 } from "@/lib/workflow";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
+import { can } from "@/lib/permissions";
+import { documentCategoriesForRequisitionUpload } from "@/lib/document-permissions";
+import { workspaceHomeForRole } from "@/lib/workspaces";
 import {
   cancelRequisitionAction,
   closeRequisitionAction,
@@ -88,6 +92,12 @@ export default async function RequisitionDetail({
     },
   });
   if (!req) notFound();
+  const requisitionScope = {
+    requisition: { requesterId: req.requesterId, status: req.status },
+  };
+  if (!can(user, "read", "requisition", requisitionScope)) {
+    redirect(`${workspaceHomeForRole(user.role as Role)}?denied=1`);
+  }
 
   const auditLogs = await prisma.auditLog.findMany({
     where: { entityType: "PurchaseRequisition", entityId: req.id },
@@ -136,6 +146,10 @@ export default async function RequisitionDetail({
   const alert = alertKey ? ALERT_MESSAGES[alertKey] : null;
   const isProcurementStep = req.status === "PROCUREMENT_REVIEW";
   const canViewApprovalChain = user.role !== "RECEIVER";
+  const uploadCategories = documentCategoriesForRequisitionUpload(user, {
+    requesterId: req.requesterId,
+    status: req.status,
+  });
 
   return (
     <div className="space-y-5">
@@ -627,7 +641,11 @@ export default async function RequisitionDetail({
           <Card>
             <CardHeader title="Documents" />
             <CardBody className="space-y-3">
-              <AttachmentsZone requisitionId={req.id} />
+              <AttachmentsZone
+                requisitionId={req.id}
+                allowedCategories={uploadCategories}
+                lockedReason="Ouverture en consultation seulement : les pièces existantes restent visibles, sans modification du dossier."
+              />
               {req.documents.length === 0 ? (
                 <p className="text-xs text-ink-500">
                   Aucun document associé pour le moment.

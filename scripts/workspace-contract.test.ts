@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { ProcurementType, Role } from "../src/lib/enums";
+import { DocumentCategory } from "../src/lib/enums";
+import {
+  canUploadRequisitionDocument,
+  documentCategoriesForRequisitionUpload,
+  REQUISITION_DOCUMENT_CATEGORIES,
+} from "../src/lib/document-permissions";
 import { can } from "../src/lib/permissions";
 import {
   PROCUREMENT_INTERCONNECTION,
@@ -149,6 +155,10 @@ const ownReturned = { requisition: { requesterId: "requester-id", status: "RETUR
 const procurementReview = { requisition: { requesterId: "requester-id", status: "PROCUREMENT_REVIEW" } };
 const poCreated = { requisition: { requesterId: "requester-id", status: "PO_CREATED" } };
 
+for (const role of roles) {
+  assert.equal(can(actor(role), "read", "requisition", procurementReview), true, `${role} can open requisition detail for read-only viewing`);
+}
+
 assert.equal(can(actor(Role.REQUESTER), "create", "requisition"), true, "requester creates requisitions");
 assert.equal(can(actor(Role.REQUESTER), "update", "requisition", ownDraft), true, "requester edits drafts");
 assert.equal(can(actor(Role.REQUESTER), "update", "requisition", ownReturned), true, "requester edits returned requests");
@@ -185,6 +195,60 @@ assert.equal(can(actor(Role.REPORTING), "update", "user"), false, "reporting can
 assert.equal(can(actor(Role.ADMIN), "update", "user"), true, "admin configures users");
 assert.equal(can(actor(Role.ADMIN), "delete", "auditLog"), false, "admin cannot delete immutable audit history");
 assert.equal(can(actor(Role.ADMIN), "decide", "requisition", procurementReview), false, "admin cannot secretly change workflow records");
+
+assert.deepEqual(
+  REQUISITION_DOCUMENT_CATEGORIES,
+  [
+    DocumentCategory.QUOTATION,
+    DocumentCategory.CONTRACT,
+    DocumentCategory.INVOICE,
+    DocumentCategory.JUSTIFICATION,
+    DocumentCategory.GRN,
+    DocumentCategory.SAN,
+    DocumentCategory.OTHER,
+  ],
+  "requisition document categories must be devis, contrat, facture, justification, GRN, SAN, autres",
+);
+assert.equal(
+  REQUISITION_DOCUMENT_CATEGORIES.includes("IDENTITY" as never),
+  false,
+  "identity document must not be listed as a requisition attachment category",
+);
+assert.deepEqual(
+  documentCategoriesForRequisitionUpload(actor(Role.REQUESTER), {
+    requesterId: "requester-id",
+    status: "DRAFT",
+  }),
+  [DocumentCategory.JUSTIFICATION, DocumentCategory.OTHER],
+  "requester may attach justification/proof only after the requisition exists and is editable",
+);
+assert.equal(
+  canUploadRequisitionDocument(
+    actor(Role.REQUESTER),
+    { requesterId: "requester-id", status: "DRAFT" },
+    DocumentCategory.JUSTIFICATION,
+  ),
+  true,
+  "requester can upload justification after creation",
+);
+assert.equal(
+  canUploadRequisitionDocument(
+    actor(Role.APPROVER),
+    { requesterId: "requester-id", status: "HIERARCHICAL_REVIEW" },
+    DocumentCategory.JUSTIFICATION,
+  ),
+  false,
+  "approver can view attachments but cannot upload them",
+);
+assert.equal(
+  canUploadRequisitionDocument(
+    actor(Role.RECEIVER),
+    { requesterId: "requester-id", status: "PO_CREATED" },
+    DocumentCategory.GRN,
+  ),
+  true,
+  "receiver can upload GRN/SAN proof at reception stage",
+);
 
 assert.deepEqual(
   [...PROCUREMENT_INTERCONNECTION],

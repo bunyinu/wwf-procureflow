@@ -86,7 +86,7 @@ export default async function RequesterWorkspacePage() {
                 <textarea name="justification" rows={3} required className="mt-1 w-full rounded-md border border-ink-200 px-3 py-2 text-sm" />
               </div>
 
-              <AttachmentsZone hint="Upload justification/proof after the request is saved." />
+              <AttachmentsZone hint="After save only: open the requisition to attach justification or proof." />
 
               <div className="flex flex-wrap gap-2">
                 <button name="intent" value="draft" type="submit" className="rounded-md border border-ink-200 px-4 py-2 text-sm font-medium text-ink-700 hover:bg-ink-50">
@@ -133,6 +133,7 @@ export default async function RequesterWorkspacePage() {
                   <th className="px-5 py-2.5 font-medium">Attachments</th>
                   <th className="px-5 py-2.5 font-medium">Status</th>
                   <th className="px-5 py-2.5 font-medium">Updated</th>
+                  <th className="px-5 py-2.5 font-medium">Open</th>
                 </tr>
               </thead>
               <tbody>
@@ -141,7 +142,11 @@ export default async function RequesterWorkspacePage() {
                     <td className="px-5 py-3 font-mono text-xs text-ink-500">
                       <Link href={`/requisitions/${request.id}`} className="hover:text-wwf-700">{request.requisitionNumber}</Link>
                     </td>
-                    <td className="px-5 py-3 text-xs text-ink-700">{request.description}</td>
+                    <td className="px-5 py-3 text-xs text-ink-700">
+                      <Link href={`/requisitions/${request.id}`} className="hover:text-wwf-700">
+                        {request.description}
+                      </Link>
+                    </td>
                     <td className="px-5 py-3 text-xs text-ink-600">{request.department.name} · {request.project.projectCode}</td>
                     <td className="px-5 py-3 text-xs text-ink-700">{request.quantity} {request.unit}</td>
                     <td className="px-5 py-3 font-mono text-xs text-ink-600">{request.budgetLine.code}</td>
@@ -149,10 +154,15 @@ export default async function RequesterWorkspacePage() {
                     <td className="px-5 py-3 text-xs text-ink-600">{request.documents.length}</td>
                     <td className="px-5 py-3"><StatusBadge status={request.status} /></td>
                     <td className="px-5 py-3 text-xs text-ink-500">{formatDate(request.updatedAt)}</td>
+                    <td className="px-5 py-3">
+                      <Link href={`/requisitions/${request.id}`} className="rounded-md border border-ink-200 bg-white px-2.5 py-1 text-xs font-medium text-ink-700 hover:border-wwf-300 hover:text-wwf-700">
+                        View
+                      </Link>
+                    </td>
                   </tr>
                 ))}
                 {requests.length === 0 ? (
-                  <tr><td colSpan={9} className="px-5 py-6 text-sm text-ink-500">No requests yet.</td></tr>
+                  <tr><td colSpan={10} className="px-5 py-6 text-sm text-ink-500">No requests yet.</td></tr>
                 ) : null}
               </tbody>
             </table>

@@ -225,6 +225,7 @@ export default async function RequisitionsPage({
                     <th className="px-5 py-2.5 font-medium">Priorité</th>
                     <th className="px-5 py-2.5 font-medium">Statut</th>
                     <th className="px-5 py-2.5 font-medium">MAJ</th>
+                    <th className="px-5 py-2.5 font-medium">Voir</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -276,6 +277,14 @@ export default async function RequisitionsPage({
                       </td>
                       <td className="px-5 py-3 text-xs text-ink-500">
                         {formatDate(r.updatedAt)}
+                      </td>
+                      <td className="px-5 py-3">
+                        <Link
+                          href={`/requisitions/${r.id}`}
+                          className="rounded-md border border-ink-200 bg-white px-2.5 py-1 text-xs font-medium text-ink-700 shadow-sm hover:border-wwf-300 hover:text-wwf-700"
+                        >
+                          Ouvrir
+                        </Link>
                       </td>
                     </tr>
                   ))}

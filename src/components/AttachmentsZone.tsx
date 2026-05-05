@@ -1,20 +1,38 @@
 "use client";
 
 import { Paperclip, UploadCloud } from "lucide-react";
-import { DOCUMENT_CATEGORY_LABEL } from "@/lib/enums";
+import {
+  DOCUMENT_CATEGORY_LABEL,
+  DocumentCategory,
+  type DocumentCategory as DocumentCategoryType,
+} from "@/lib/enums";
 import { useRef, useState } from "react";
 import { attachDocumentAction } from "@/app/(app)/requisitions/documents/actions";
 
 export function AttachmentsZone({
   requisitionId,
   hint,
+  allowedCategories,
+  lockedReason,
 }: {
   /** Required to actually attach. If absent, render info-only mode. */
   requisitionId?: string;
   hint?: string;
+  /** Empty list means view-only: existing documents remain visible outside this component, no upload form is rendered. */
+  allowedCategories?: DocumentCategoryType[];
+  lockedReason?: string;
 }) {
   if (!requisitionId) return <InfoOnly hint={hint} />;
-  return <Active requisitionId={requisitionId} hint={hint} />;
+  if (allowedCategories && allowedCategories.length === 0) {
+    return <Locked hint={hint} lockedReason={lockedReason} />;
+  }
+  return (
+    <Active
+      requisitionId={requisitionId}
+      hint={hint}
+      allowedCategories={allowedCategories ?? Object.values(DocumentCategory)}
+    />
+  );
 }
 
 function InfoOnly({ hint }: { hint?: string }) {
@@ -30,23 +48,62 @@ function InfoOnly({ hint }: { hint?: string }) {
             Pièces jointes
           </div>
           <p className="mt-1 text-xs text-ink-600">
-            Les pièces seront attachables au dossier après création de la
-            réquisition. Les catégories disponibles : devis, contrat, facture,
-            justification, GRN, SAN, autres.
+            Aucun fichier n&apos;est téléversé avant l&apos;enregistrement.
+            Créez d&apos;abord la réquisition, puis ouvrez le dossier pour
+            joindre les pièces : devis, contrat, facture, justification, GRN,
+            SAN ou autre.
           </p>
           {hint ? (
             <p className="mt-1 text-[11px] italic text-ink-500">{hint}</p>
           ) : null}
         </div>
         <span className="shrink-0 rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-ink-500">
-          Après création
+          Après enregistrement
         </span>
       </div>
     </div>
   );
 }
 
-function Active({ requisitionId, hint }: { requisitionId: string; hint?: string }) {
+function Locked({
+  hint,
+  lockedReason,
+}: {
+  hint?: string;
+  lockedReason?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-dashed border-ink-200 bg-ink-50/40 p-4">
+      <div className="flex items-start gap-3">
+        <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-md bg-white text-ink-500 ring-1 ring-ink-200">
+          <Paperclip className="h-4 w-4" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-medium text-ink-800">
+            Pièces jointes en lecture seule
+          </div>
+          <p className="mt-1 text-xs text-ink-600">
+            {lockedReason ??
+              "Ce workspace peut consulter les pièces du dossier mais ne peut pas en ajouter."}
+          </p>
+          {hint ? (
+            <p className="mt-1 text-[11px] italic text-ink-500">{hint}</p>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Active({
+  requisitionId,
+  hint,
+  allowedCategories,
+}: {
+  requisitionId: string;
+  hint?: string;
+  allowedCategories: DocumentCategoryType[];
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [selected, setSelected] = useState<{ name: string; size: number } | null>(
     null,
@@ -68,9 +125,9 @@ function Active({ requisitionId, hint }: { requisitionId: string; hint?: string 
             Ajouter une pièce jointe
           </div>
           <p className="text-[11.5px] text-ink-600">
-            Sélectionnez le fichier et la catégorie. Le prototype conserve les
-            métadonnées (nom, taille, catégorie). Le stockage objet réel
-            utilisera MinIO en production.
+            Sélectionnez le fichier et la catégorie. Le dossier conserve le nom,
+            la taille, la catégorie, l&apos;auteur et l&apos;horodatage dans le
+            journal d&apos;audit.
           </p>
           {hint ? (
             <p className="text-[11px] italic text-ink-500">{hint}</p>
@@ -105,9 +162,9 @@ function Active({ requisitionId, hint }: { requisitionId: string; hint?: string 
               defaultValue="JUSTIFICATION"
               className="rounded-md border border-ink-200 bg-white px-3 py-2 text-xs shadow-sm"
             >
-              {Object.entries(DOCUMENT_CATEGORY_LABEL).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v}
+              {allowedCategories.map((category) => (
+                <option key={category} value={category}>
+                  {DOCUMENT_CATEGORY_LABEL[category]}
                 </option>
               ))}
             </select>
