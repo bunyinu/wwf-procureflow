@@ -1,0 +1,32 @@
+databases:
+  - name: wwf-procureflow-db
+    databaseName: procureflow
+    user: procureflow
+    plan: free
+    region: frankfurt
+
+services:
+  - type: web
+    name: wwf-procureflow
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: npm install && npm run build
+    preDeployCommand: npm run render:release
+    startCommand: npm run start
+    healthCheckPath: /demo
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20.20.2
+      - key: DATABASE_URL
+        fromDatabase:
+          name: wwf-procureflow-db
+          property: connectionString
+      - key: SESSION_COOKIE_NAME
+        value: tsc_session
+      - key: APP_NAME
+        value: TSC ProcureFlow
+      - key: NODE_ENV
+        value: production

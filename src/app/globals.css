@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --premium-rule: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(180, 133, 51, 0.4) 20%,
+    rgba(180, 133, 51, 0.4) 80%,
+    transparent 100%
+  );
+}
+
+html,
+body {
+  background: #f6f8fa;
+  color: #1f2333;
+  font-feature-settings: "ss01", "cv11";
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 {
+  letter-spacing: -0.01em;
+}
+
+.serif {
+  font-family: var(--font-serif);
+}
+
+/* Subtle entry animation */
+.fade-in {
+  animation: fade-in 220ms ease-out both;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Premium scrollbar */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #cbd2dc;
+  border-radius: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #a9b2c0;
+}
+
+/* Card lift hover */
+.lift {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+.lift:hover {
+  transform: translateY(-1px);
+}
+
+/* Premium gold rule */
+.gold-rule {
+  height: 1px;
+  background: var(--premium-rule);
+}
+
+/* Print baseline for premium PDFs */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm 14mm 18mm 14mm;
+  }
+  body {
+    background: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .pdf-page {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}

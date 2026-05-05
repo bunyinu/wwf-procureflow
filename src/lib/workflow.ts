@@ -1,0 +1,128 @@
+import { Role, RequisitionStatus } from "@/lib/enums";
+
+export const STATUS_LABELS: Record<RequisitionStatus, string> = {
+  DRAFT: "Brouillon",
+  SUBMITTED: "Soumise",
+  MANAGER_REVIEW: "Revue Manager",
+  PROCUREMENT_REVIEW: "Revue Achats",
+  FINANCE_REVIEW: "Revue Finance",
+  PO_CREATED: "BC émis",
+  RECEIVED: "Reçue",
+  CLOSED: "Clôturée",
+  REJECTED: "Rejetée",
+  RETURNED_FOR_REVISION: "Retournée",
+  CANCELLED: "Annulée",
+};
+
+export const STATUS_BADGE: Record<RequisitionStatus, string> = {
+  DRAFT: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
+  SUBMITTED: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
+  MANAGER_REVIEW: "bg-amber-50 text-amber-800 ring-1 ring-amber-200",
+  PROCUREMENT_REVIEW: "bg-purple-50 text-purple-700 ring-1 ring-purple-200",
+  FINANCE_REVIEW: "bg-orange-50 text-orange-700 ring-1 ring-orange-200",
+  PO_CREATED: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200",
+  RECEIVED: "bg-teal-50 text-teal-700 ring-1 ring-teal-200",
+  CLOSED: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+  REJECTED: "bg-red-50 text-red-700 ring-1 ring-red-200",
+  RETURNED_FOR_REVISION: "bg-yellow-50 text-yellow-800 ring-1 ring-yellow-200",
+  CANCELLED: "bg-zinc-200 text-zinc-700 ring-1 ring-zinc-300",
+};
+
+export const ROLE_LABELS: Record<Role, string> = {
+  REQUESTER: "Demandeur",
+  MANAGER: "Manager Approbateur",
+  PROCUREMENT: "Officier Achats",
+  FINANCE: "Approbateur Finance",
+  AUDITOR: "Auditeur",
+  ADMIN: "Administrateur",
+};
+
+export const TRANSITIONS: Partial<Record<RequisitionStatus, RequisitionStatus[]>> = {
+  DRAFT: ["SUBMITTED"],
+  SUBMITTED: ["MANAGER_REVIEW"],
+  MANAGER_REVIEW: ["PROCUREMENT_REVIEW", "REJECTED", "RETURNED_FOR_REVISION"],
+  RETURNED_FOR_REVISION: ["DRAFT"],
+  PROCUREMENT_REVIEW: ["FINANCE_REVIEW", "REJECTED"],
+  // Finance may return a dossier with an explicit budget exception flag.
+  FINANCE_REVIEW: ["PO_CREATED", "REJECTED", "RETURNED_FOR_REVISION"],
+  PO_CREATED: ["RECEIVED"],
+  RECEIVED: ["CLOSED"],
+};
+
+export function isValidTransition(
+  from: RequisitionStatus,
+  to: RequisitionStatus,
+): boolean {
+  if (to === "CANCELLED") {
+    return !["CLOSED", "RECEIVED", "REJECTED", "CANCELLED"].includes(from);
+  }
+  return (TRANSITIONS[from] ?? []).includes(to);
+}
+
+export const FINAL_STATUSES: RequisitionStatus[] = [
+  "CLOSED",
+  "REJECTED",
+  "CANCELLED",
+];
+
+export function approvalTier(amountUSD: number): {
+  tier: 1 | 2 | 3;
+  needsManager: boolean;
+  needsProcurement: boolean;
+  needsFinance: boolean;
+  needsDirectorFlag: boolean;
+} {
+  if (amountUSD < 1000) {
+    return {
+      tier: 1,
+      needsManager: true,
+      needsProcurement: true,
+      needsFinance: false,
+      needsDirectorFlag: false,
+    };
+  }
+  if (amountUSD <= 10000) {
+    return {
+      tier: 2,
+      needsManager: true,
+      needsProcurement: true,
+      needsFinance: true,
+      needsDirectorFlag: false,
+    };
+  }
+  return {
+    tier: 3,
+    needsManager: true,
+    needsProcurement: true,
+    needsFinance: true,
+    needsDirectorFlag: true,
+  };
+}
+
+export function nextRoleForStatus(status: RequisitionStatus): Role | null {
+  switch (status) {
+    case "SUBMITTED":
+    case "MANAGER_REVIEW":
+      return "MANAGER";
+    case "PROCUREMENT_REVIEW":
+      return "PROCUREMENT";
+    case "FINANCE_REVIEW":
+      return "FINANCE";
+    case "PO_CREATED":
+    case "RECEIVED":
+      return "PROCUREMENT";
+    default:
+      return null;
+  }
+}
+
+export const TIMELINE_STEPS: RequisitionStatus[] = [
+  "DRAFT",
+  "SUBMITTED",
+  "MANAGER_REVIEW",
+  "PROCUREMENT_REVIEW",
+  "FINANCE_REVIEW",
+  "PO_CREATED",
+  "RECEIVED",
+  "CLOSED",
+];
