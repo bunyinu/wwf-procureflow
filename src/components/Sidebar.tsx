@@ -191,6 +191,8 @@ const NAV_BY_ROLE: Record<Role, Section[]> = {
       items: [
         { label: "Utilisateurs", href: "/admin/users", icon: Users },
         { label: "Départements", href: "/admin/departments", icon: Building2 },
+        { label: "Projets", href: "/admin/projects", icon: FolderArchive },
+        { label: "Lignes budgétaires", href: "/admin/budget-lines", icon: PiggyBank },
         { label: "Paramètres", href: "/admin/settings", icon: Settings },
       ],
     },
