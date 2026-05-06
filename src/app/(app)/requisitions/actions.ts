@@ -250,7 +250,7 @@ export async function decideAction(formData: FormData) {
     id: formData.get("id"),
     decision: formData.get("decision"),
     comment: formData.get("comment") || "",
-    budgetException: formData.get("budgetException") as string,
+    budgetException: optionalFormString(formData.get("budgetException")),
     procurementType: optionalFormString(formData.get("procurementType")),
   });
   if (!result.success) {
@@ -532,12 +532,12 @@ const receiptSchema = z.object({
 export async function createReceiptAction(formData: FormData) {
   const user = await requireUser();
   const result = receiptSchema.safeParse({
-    requisitionId: formData.get("requisitionId"),
+    requisitionId: optionalFormString(formData.get("requisitionId")),
     purchaseOrderId: formData.get("purchaseOrderId"),
     receiptType: formData.get("receiptType"),
-    notes: formData.get("notes"),
-    discrepancyFlag: formData.get("discrepancyFlag") as string,
-    discrepancyNotes: formData.get("discrepancyNotes") as string,
+    notes: optionalFormString(formData.get("notes")),
+    discrepancyFlag: optionalFormString(formData.get("discrepancyFlag")),
+    discrepancyNotes: optionalFormString(formData.get("discrepancyNotes")),
   });
   if (!result.success) {
     const id = String(formData.get("requisitionId") ?? "");

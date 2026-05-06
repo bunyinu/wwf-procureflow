@@ -207,6 +207,16 @@ assert.equal(
   "threshold approval route must be a valid workflow transition",
 );
 assert.equal(
+  isValidTransition("PO_CREATED", "RECEIVED"),
+  true,
+  "receiver GRN/SAN validation must move PO-created requisitions to received",
+);
+assert.equal(
+  isValidTransition("RECEIVED", "CLOSED"),
+  true,
+  "procurement must be able to close received requisitions",
+);
+assert.equal(
   computeStageTimings({
     createdAt: new Date("2026-05-03T00:00:00Z"),
     submittedAt: new Date("2026-05-01T00:00:00Z"),

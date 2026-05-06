@@ -144,7 +144,7 @@ export default async function RequisitionDetail({
   const canClose =
     user.role === "PROCUREMENT" && req.status === "RECEIVED";
 
-  if ((searchParams.invalid || searchParams.error === "invalid") && canDecide) {
+  if (searchParams.invalid || searchParams.error === "invalid") {
     redirect(`/requisitions/${req.id}`);
   }
 
