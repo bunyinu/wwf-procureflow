@@ -35,12 +35,12 @@ export function Stat({
         : "bg-ink-50 text-ink-500 ring-ink-100";
 
   return (
-    <div className="lift group relative overflow-hidden rounded-xl border border-ink-200 bg-white p-5 shadow-soft">
+    <div className="executive-panel lift group relative overflow-hidden rounded-2xl p-5">
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        className="pointer-events-none absolute inset-x-0 top-0 h-1"
         style={{
           background:
-            "linear-gradient(90deg, transparent, rgba(180,133,51,0.3), transparent)",
+            "linear-gradient(90deg, rgba(46,109,60,0.65), rgba(180,133,51,0.45), transparent)",
         }}
       />
       <div className="flex items-start justify-between gap-3">
@@ -50,7 +50,7 @@ export function Stat({
         {Icon ? (
           <span
             className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-md ring-1",
+              "flex h-9 w-9 items-center justify-center rounded-xl ring-1",
               iconBg,
             )}
           >
@@ -60,7 +60,7 @@ export function Stat({
       </div>
       <div
         className={cn(
-          "mt-3 font-serif text-[28px] font-semibold leading-none tracking-tightest",
+          "mt-3 text-[30px] font-semibold leading-none tracking-tight",
           toneClass,
         )}
       >

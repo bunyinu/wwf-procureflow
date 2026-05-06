@@ -1,88 +1,77 @@
 import Link from "next/link";
-import { ArrowRight, Leaf, ShieldCheck } from "lucide-react";
+import { ArrowRight, CheckCircle2, Leaf, ShieldCheck } from "lucide-react";
 import { WWF_TDR, WWF_TECHNICAL_SCORE, WWF_FINANCIAL_SCORE } from "@/lib/tdr";
 
-const workspaces = [
-  "Requester",
-  "Approver",
-  "Procurement",
-  "Supplier Manager",
-  "Receiver",
-  "Archive & Audit",
-  "Reporting",
-  "Admin",
+const promises = [
+  "8 espaces de travail séparés",
+  "Circuit achat verrouillé côté serveur",
+  "Audit, GRN/SAN et exports prêts",
 ];
 
 export default function DemoPage() {
   return (
-    <main className="min-h-screen bg-white text-ink-900">
-      <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6">
+    <main className="min-h-screen overflow-hidden bg-[#f7faf6] text-ink-900">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_15%_5%,rgba(46,109,60,0.18),transparent_32rem),radial-gradient(circle_at_85%_0%,rgba(180,133,51,0.12),transparent_28rem)]" />
+      <header className="relative mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
         <Link href="/demo" className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-wwf-700 text-white">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-wwf-900 text-white shadow-soft">
             <Leaf className="h-5 w-5" />
           </span>
           <span>
             <span className="block text-base font-semibold leading-tight">
-              TSC ProcureFlow
+              ProcureFlow
             </span>
-            <span className="block text-xs text-ink-500">Offre WWF-RDC · OD 40001336 / 403725</span>
+            <span className="block text-xs text-ink-500">WWF-RDC procurement platform</span>
           </span>
         </Link>
 
         <Link
           href="/login"
-          className="inline-flex items-center gap-2 rounded-md bg-wwf-700 px-4 py-2 text-sm font-medium text-white hover:bg-wwf-800"
+          className="inline-flex items-center gap-2 rounded-xl bg-wwf-900 px-4 py-2 text-sm font-semibold text-white shadow-soft hover:bg-wwf-800"
         >
-          Sign in
+          Accéder
           <ArrowRight className="h-4 w-4" />
         </Link>
       </header>
 
-      <section className="mx-auto grid max-w-5xl gap-10 px-6 py-16 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
+      <section className="relative mx-auto grid max-w-6xl gap-10 px-6 py-14 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-wwf-100 bg-wwf-50 px-3 py-1 text-xs font-medium text-wwf-800">
+          <div className="inline-flex items-center gap-2 rounded-full border border-wwf-100 bg-white/70 px-3 py-1 text-xs font-semibold text-wwf-800 shadow-sm">
             <ShieldCheck className="h-3.5 w-3.5" />
             TDR WWF-RDC · dépôt {WWF_TDR.submissionDeadline}
           </div>
 
-          <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-ink-950 sm:text-5xl">
-            Plateforme web de gestion électronique du processus d&apos;achat.
+          <h1 className="mt-7 max-w-3xl text-5xl font-semibold tracking-[-0.04em] text-ink-950 sm:text-6xl">
+            Gestion des achats institutionnels.
           </h1>
 
-          <p className="mt-5 max-w-2xl text-base leading-7 text-ink-600">
-            Démonstration alignée sur les TDR : réquisitions, validation par
-            seuil, classification achats, fournisseurs, GRN/SAN, archivage,
-            reporting, utilisateurs et droits d&apos;accès.
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-ink-600">
+            Une plateforme claire pour créer, valider, acheter, recevoir,
+            archiver et reporter — avec séparation réelle des rôles.
           </p>
 
-          <div className="mt-6 grid max-w-2xl gap-3 sm:grid-cols-3">
-            <div className="rounded-lg border border-ink-100 bg-white p-3">
-              <div className="text-2xl font-semibold text-ink-900">{WWF_TECHNICAL_SCORE}</div>
-              <div className="text-xs text-ink-500">points techniques ciblés</div>
-            </div>
-            <div className="rounded-lg border border-ink-100 bg-white p-3">
-              <div className="text-2xl font-semibold text-ink-900">{WWF_FINANCIAL_SCORE}</div>
-              <div className="text-xs text-ink-500">points financiers</div>
-            </div>
-            <div className="rounded-lg border border-ink-100 bg-white p-3">
-              <div className="text-2xl font-semibold text-ink-900">12</div>
-              <div className="text-xs text-ink-500">semaines · 3 mois max</div>
-            </div>
+          <div className="mt-7 space-y-3">
+            {promises.map((promise) => (
+              <div key={promise} className="flex items-center gap-3 text-sm font-medium text-ink-800">
+                <CheckCircle2 className="h-4 w-4 text-wwf-700" />
+                {promise}
+              </div>
+            ))}
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href="/login"
-              className="inline-flex items-center gap-2 rounded-md bg-wwf-700 px-5 py-3 text-sm font-medium text-white hover:bg-wwf-800"
+              className="inline-flex items-center gap-2 rounded-xl bg-wwf-900 px-5 py-3 text-sm font-semibold text-white shadow-elevated hover:bg-wwf-800"
             >
               Accéder à la plateforme
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="/proof"
-              className="inline-flex items-center rounded-md border border-ink-200 px-5 py-3 text-sm font-medium text-ink-700 hover:bg-ink-50"
+              className="inline-flex items-center rounded-xl border border-ink-200 bg-white/70 px-5 py-3 text-sm font-semibold text-ink-800 shadow-sm hover:bg-white"
             >
-              Voir la conformité TDR
+              Conformité TDR
             </Link>
           </div>
 
@@ -91,22 +80,26 @@ export default function DemoPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-ink-200 bg-ink-50/50 p-6">
-          <h2 className="text-sm font-semibold text-ink-900">8 workspaces séparés</h2>
-          <div className="mt-4 grid gap-2">
-            {workspaces.map((workspace, index) => (
-              <div
-                key={workspace}
-                className="flex items-center justify-between rounded-lg bg-white px-3 py-2 text-sm ring-1 ring-ink-100"
-              >
-                <span className="font-medium text-ink-800">{workspace}</span>
-                <span className="font-mono text-xs text-ink-400">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
+        <div className="executive-panel rounded-[2rem] p-6">
+          <div className="rounded-3xl bg-[#101811] p-5 text-white shadow-elevated">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs uppercase tracking-[0.18em] text-white/45">Live pilot</div>
+                <div className="mt-1 text-lg font-semibold">TSC ProcureFlow</div>
               </div>
-            ))}
+              <div className="rounded-full bg-wwf-400/15 px-3 py-1 text-xs text-wwf-100">8 workspaces</div>
+            </div>
+            <div className="mt-8 grid grid-cols-3 gap-3">
+              <Metric label="Technique" value={WWF_TECHNICAL_SCORE} />
+              <Metric label="Finance" value={WWF_FINANCIAL_SCORE} />
+              <Metric label="Cycle" value="7" />
+            </div>
+            <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-white/74">
+              Requester → Approver → Procurement → Supplier due diligence →
+              Award → Receiver → Audit → Reporting.
+            </div>
           </div>
-          <div className="mt-5 rounded-lg bg-white p-3 text-xs text-ink-600 ring-1 ring-ink-100">
+          <div className="mt-5 rounded-2xl bg-white/70 p-4 text-xs leading-5 text-ink-600 ring-1 ring-ink-100">
             Objet : {WWF_TDR.offerObject}
           </div>
         </div>
@@ -116,5 +109,14 @@ export default function DemoPage() {
         © 2026 Tech Solutions Congo · TSC ProcureFlow
       </footer>
     </main>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.06] p-3">
+      <div className="text-2xl font-semibold">{value}</div>
+      <div className="mt-1 text-[10px] uppercase tracking-[0.14em] text-white/45">{label}</div>
+    </div>
   );
 }

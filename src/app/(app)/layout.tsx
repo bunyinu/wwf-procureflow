@@ -10,7 +10,7 @@ export default async function AppShell({ children }: { children: ReactNode }) {
   const notifications = await getNotificationsFor(user);
   const unread = notifications.filter((n) => n.unread).length;
   return (
-    <div className="flex min-h-screen bg-ink-50">
+    <div className="app-gradient-shell flex min-h-screen">
       <Sidebar role={user.role as Role} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar
@@ -19,8 +19,10 @@ export default async function AppShell({ children }: { children: ReactNode }) {
           email={user.email}
           unreadCount={unread}
         />
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 fade-in">
-          {children}
+        <main className="fade-in flex-1 px-4 py-6 sm:px-6 lg:px-8">
+          <div className="mx-auto w-full max-w-[1500px]">
+            {children}
+          </div>
         </main>
       </div>
     </div>

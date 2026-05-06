@@ -150,7 +150,7 @@ const NAV_BY_ROLE: Record<Role, Section[]> = {
 const ROLE_TINT: Record<Role, string> = {
   REQUESTER: "from-sky-600 to-sky-800",
   APPROVER: "from-amber-600 to-amber-800",
-  PROCUREMENT: "from-purple-600 to-purple-800",
+  PROCUREMENT: "from-wwf-600 to-wwf-800",
   SUPPLIER_MANAGER: "from-rose-600 to-rose-800",
   RECEIVER: "from-teal-600 to-teal-800",
   AUDITOR: "from-slate-600 to-slate-800",
@@ -165,29 +165,40 @@ export function Sidebar({ role }: { role: Role }) {
   const WorkspaceIcon = WORKSPACE_ICON[role];
 
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-ink-200 bg-gradient-to-b from-white to-ink-50/30 lg:flex lg:flex-col">
-      <div className="flex items-center gap-3 border-b border-ink-100 px-5 py-5">
+    <aside className="hidden w-[278px] shrink-0 border-r border-white/10 bg-[#101811] text-white shadow-[18px_0_50px_-42px_rgba(15,23,42,0.8)] lg:flex lg:flex-col">
+      <div className="relative overflow-hidden border-b border-white/10 px-5 py-5">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-wwf-500/15 blur-3xl" />
+        <div className="relative flex items-center gap-3">
         <div
           className={cn(
-            "relative flex h-11 w-11 items-center justify-center rounded-md bg-gradient-to-br text-white shadow-soft ring-1 ring-black/5",
+            "relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-soft ring-1 ring-white/20",
             ROLE_TINT[role],
           )}
         >
           <WorkspaceIcon className="h-5 w-5" strokeWidth={2.25} />
         </div>
         <div className="min-w-0">
-          <div className="font-serif text-base font-semibold leading-none tracking-tight text-ink-900">
+          <div className="text-base font-semibold leading-none tracking-tight text-white">
             ProcureFlow
           </div>
-          <div className="mt-1 truncate text-[11px] text-ink-500">
+          <div className="mt-1 truncate text-[11px] text-white/58">
             {workspace.shortTitle} · workspace {workspace.number}
+          </div>
+        </div>
+        </div>
+        <div className="relative mt-4 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-wwf-100/75">
+            Separate route
+          </div>
+          <div className="mt-1 truncate text-xs text-white/78">
+            {workspace.path}
           </div>
         </div>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin">
         {sections.map((section) => (
           <div key={section.title} className="mb-5">
-            <div className="px-2 pb-2 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-ink-400">
+            <div className="px-2 pb-2 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-white/38">
               {section.title}
             </div>
             <ul className="space-y-0.5">
@@ -202,10 +213,10 @@ export function Sidebar({ role }: { role: Role }) {
                     <Link
                       href={item.href}
                       className={cn(
-                        "group flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] transition-colors",
+                        "group flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] transition-colors",
                         active
-                          ? "bg-white font-medium text-wwf-800 shadow-soft ring-1 ring-wwf-100"
-                          : "text-ink-700 hover:bg-white/60 hover:text-ink-900",
+                          ? "bg-white font-semibold text-wwf-900 shadow-soft ring-1 ring-white/70"
+                          : "text-white/70 hover:bg-white/[0.06] hover:text-white",
                       )}
                     >
                       <Icon
@@ -213,7 +224,7 @@ export function Sidebar({ role }: { role: Role }) {
                           "h-4 w-4 shrink-0",
                           active
                             ? "text-wwf-700"
-                            : "text-ink-400 group-hover:text-ink-600",
+                            : "text-white/38 group-hover:text-white/70",
                         )}
                       />
                       <span className="truncate">{item.label}</span>
@@ -225,10 +236,10 @@ export function Sidebar({ role }: { role: Role }) {
           </div>
         ))}
       </nav>
-      <div className="border-t border-ink-100 px-5 py-4">
+      <div className="border-t border-white/10 px-5 py-4">
         <div className="gold-rule mb-3" />
-        <div className="flex items-center gap-2 text-[10.5px] uppercase tracking-[0.14em] text-ink-500">
-          <Leaf className="h-3 w-3" /> WWF-RDC
+        <div className="flex items-center gap-2 text-[10.5px] uppercase tracking-[0.14em] text-white/45">
+          <Leaf className="h-3 w-3 text-wwf-300" /> WWF-RDC
         </div>
       </div>
     </aside>

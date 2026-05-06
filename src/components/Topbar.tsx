@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Bell, LogOut } from "lucide-react";
+import { Bell, Leaf, LogOut, ShieldCheck } from "lucide-react";
 import { ROLE_LABELS } from "@/lib/workflow";
 import type { Role } from "@/lib/enums";
 import { logoutAction } from "@/app/(auth)/actions";
+import { WORKSPACE_BY_ROLE } from "@/lib/workspaces";
 
 const ROLE_ACCENT: Record<Role, string> = {
   REQUESTER: "bg-sky-50 text-sky-700 ring-sky-100",
@@ -26,11 +27,24 @@ export function Topbar({
   email: string;
   unreadCount: number;
 }) {
+  const workspace = WORKSPACE_BY_ROLE[role];
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-ink-200 bg-white/85 px-6 backdrop-blur-md">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between border-b border-ink-200/70 bg-white/76 px-5 backdrop-blur-xl supports-[backdrop-filter]:bg-white/66">
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-wwf-900 text-white shadow-soft ring-1 ring-white/70 lg:hidden">
+          <Leaf className="h-4 w-4" />
+        </span>
+        <div className="hidden min-w-0 lg:block">
+          <div className="truncate text-sm font-semibold text-ink-950">
+            {workspace.title}
+          </div>
+          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-ink-500">
+            <ShieldCheck className="h-3 w-3 text-wwf-700" />
+            Route séparée · droits appliqués côté serveur · audit actif
+          </div>
+        </div>
         <span
-          className={`hidden items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 lg:inline-flex ${ROLE_ACCENT[role]}`}
+          className={`hidden items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 xl:inline-flex ${ROLE_ACCENT[role]}`}
         >
           <span
             className="h-1.5 w-1.5 rounded-full bg-current opacity-70"

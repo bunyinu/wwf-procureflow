@@ -11,7 +11,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "lift rounded-xl border border-ink-200 bg-white shadow-soft",
+        "executive-panel lift overflow-hidden rounded-2xl",
         className,
       )}
     >
@@ -30,13 +30,14 @@ export function CardHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-ink-100 px-5 py-4">
-      <div>
-        <h2 className="text-[13.5px] font-semibold tracking-tight text-ink-900">
+    <div className="relative flex items-start justify-between gap-4 border-b border-ink-100/80 px-5 py-4">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-wwf-600/45 via-gold-400/45 to-transparent" />
+      <div className="min-w-0">
+        <h2 className="text-[14px] font-semibold tracking-tight text-ink-950">
           {title}
         </h2>
         {description ? (
-          <p className="mt-1 text-xs text-ink-500">{description}</p>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-ink-500">{description}</p>
         ) : null}
       </div>
       {action}
