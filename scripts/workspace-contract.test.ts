@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { ProcurementType, Role } from "../src/lib/enums";
+import { ProcurementType, Role, SupplierDocumentCategory } from "../src/lib/enums";
 import { DocumentCategory } from "../src/lib/enums";
+import { SUPPLIER_DOCUMENT_CATEGORY_LABEL } from "../src/lib/enums";
 import {
   canUploadRequisitionDocument,
   documentCategoriesForRequisitionUpload,
@@ -380,7 +381,34 @@ assert.deepEqual(
 );
 
 const seedSource = readFileSync("prisma/seed.ts", "utf8");
+const schemaSource = readFileSync("prisma/schema.prisma", "utf8");
+const requisitionActionsSource = readFileSync("src/app/(app)/requisitions/actions.ts", "utf8");
+const supplierActionsSource = readFileSync("src/app/(app)/suppliers/actions.ts", "utf8");
+const requisitionDetailSource = readFileSync("src/app/(app)/requisitions/[id]/page.tsx", "utf8");
 assert.equal(seedSource.includes("Role.MANAGER"), false, "seed must not create legacy manager role entries");
 assert.equal(seedSource.includes("Role.FINANCE"), false, "seed must not create legacy finance role entries");
+assert.equal(schemaSource.includes("model SupplierDocument"), true, "supplier due diligence documents must be persisted, not only described in UI");
+assert.equal(seedSource.includes("supplierDocument.create"), true, "seed must include supplier due diligence documents for evaluator demo");
+assert.equal(
+  SUPPLIER_DOCUMENT_CATEGORY_LABEL[SupplierDocumentCategory.ANTI_CORRUPTION],
+  "Annexe B anti-corruption",
+  "supplier due diligence must include Annex B anti-corruption evidence",
+);
+assert.equal(
+  supplierActionsSource.includes("attachSupplierDocumentAction"),
+  true,
+  "supplier manager must have a server action to upload due diligence documents",
+);
+assert.equal(
+  requisitionActionsSource.includes("createQuoteAction") && requisitionActionsSource.includes("markQuoteWinnerAction"),
+  true,
+  "procurement workspace must persist offer analysis and award selection",
+);
+assert.equal(
+  requisitionActionsSource.includes("updateRequisitionAction") &&
+    requisitionDetailSource.includes("Modifier la réquisition"),
+  true,
+  "requester must be able to edit draft/returned requisitions, not only view them",
+);
 
 console.log("workspace-contract-ok");

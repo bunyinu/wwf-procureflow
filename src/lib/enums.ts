@@ -113,6 +113,18 @@ export const DocumentCategory = {
 export type DocumentCategory =
   (typeof DocumentCategory)[keyof typeof DocumentCategory];
 
+export const SupplierDocumentCategory = {
+  RCCM: "RCCM",
+  TAX_ID: "TAX_ID",
+  TAX_CLEARANCE: "TAX_CLEARANCE",
+  ANTI_CORRUPTION: "ANTI_CORRUPTION",
+  BANK_REFERENCE: "BANK_REFERENCE",
+  CLIENT_REFERENCE: "CLIENT_REFERENCE",
+  OTHER: "OTHER",
+} as const;
+export type SupplierDocumentCategory =
+  (typeof SupplierDocumentCategory)[keyof typeof SupplierDocumentCategory];
+
 // Display labels (French)
 export const PRIORITY_LABEL: Record<Priority, string> = {
   LOW: "Faible",
@@ -165,6 +177,16 @@ export const DOCUMENT_CATEGORY_LABEL: Record<DocumentCategory, string> = {
   GRN: "GRN",
   SAN: "SAN",
   OTHER: "Autre",
+};
+
+export const SUPPLIER_DOCUMENT_CATEGORY_LABEL: Record<SupplierDocumentCategory, string> = {
+  RCCM: "RCCM / registre commerce",
+  TAX_ID: "NIF / identification fiscale",
+  TAX_CLEARANCE: "Attestation fiscale",
+  ANTI_CORRUPTION: "Annexe B anti-corruption",
+  BANK_REFERENCE: "Référence bancaire",
+  CLIENT_REFERENCE: "Référence client",
+  OTHER: "Autre document diligence",
 };
 
 export const PRIORITY_BADGE: Record<Priority, string> = {

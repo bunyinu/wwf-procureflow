@@ -7,9 +7,11 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { assertCan } from "@/lib/permissions";
+import { optionalFormString } from "@/lib/form";
 import {
   DueDiligenceStatus,
   Role,
+  SupplierDocumentCategory,
   SupplierStatus,
 } from "@/lib/enums";
 
@@ -40,11 +42,11 @@ export async function createSupplierAction(formData: FormData) {
   assertCan(user, "create", "supplier", {}, "/suppliers?denied=1");
   const result = supplierSchema.safeParse({
     companyName: formData.get("companyName"),
-    taxId: formData.get("taxId") || undefined,
-    contactName: formData.get("contactName") || undefined,
+    taxId: optionalFormString(formData.get("taxId")),
+    contactName: optionalFormString(formData.get("contactName")),
     email: formData.get("email") || "",
-    phone: formData.get("phone") || undefined,
-    address: formData.get("address") || undefined,
+    phone: optionalFormString(formData.get("phone")),
+    address: optionalFormString(formData.get("address")),
     status: formData.get("status") || SupplierStatus.PENDING,
     dueDiligenceStatus:
       formData.get("dueDiligenceStatus") || DueDiligenceStatus.NOT_STARTED,
@@ -110,6 +112,64 @@ export async function toggleAntiCorruptionAction(formData: FormData) {
   revalidatePath(`/suppliers/${id}`);
   revalidatePath("/suppliers");
   redirect(`/suppliers/${id}`);
+}
+
+const supplierDocumentSchema = z.object({
+  supplierId: z.string().min(1),
+  documentCategory: z.enum([
+    SupplierDocumentCategory.RCCM,
+    SupplierDocumentCategory.TAX_ID,
+    SupplierDocumentCategory.TAX_CLEARANCE,
+    SupplierDocumentCategory.ANTI_CORRUPTION,
+    SupplierDocumentCategory.BANK_REFERENCE,
+    SupplierDocumentCategory.CLIENT_REFERENCE,
+    SupplierDocumentCategory.OTHER,
+  ]),
+});
+
+export async function attachSupplierDocumentAction(formData: FormData) {
+  const user = await requireUser();
+  assertCan(user, "update", "supplier", {}, "/suppliers?denied=1");
+  const supplierId = String(formData.get("supplierId") || "");
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) {
+    redirect(`/suppliers/${supplierId}?error=${encodeURIComponent("Aucun fichier sélectionné")}`);
+  }
+  const result = supplierDocumentSchema.safeParse({
+    supplierId,
+    documentCategory: formData.get("documentCategory"),
+  });
+  if (!result.success) {
+    redirect(`/suppliers/${supplierId}?error=${encodeURIComponent("Catégorie diligence invalide")}`);
+  }
+  const parsed = result.data;
+  const supplier = await prisma.supplier.findUnique({ where: { id: parsed.supplierId } });
+  if (!supplier) redirect("/suppliers?error=missing_supplier");
+
+  const created = await prisma.supplierDocument.create({
+    data: {
+      supplierId: parsed.supplierId,
+      fileName: file.name,
+      fileType: file.type || "application/octet-stream",
+      fileSize: file.size,
+      fileUrl: `/placeholder/suppliers/${parsed.supplierId}/${encodeURIComponent(file.name)}`,
+      uploadedById: user.id,
+      documentCategory: parsed.documentCategory,
+    },
+  });
+  await logAudit({
+    actorId: user.id,
+    actorRole: user.role as Role,
+    action: "SUPPLIER_DOCUMENT_ATTACHED",
+    entityType: "SupplierDocument",
+    entityId: created.id,
+    newValue: `${created.fileName} (${created.documentCategory})`,
+    comment: `Diligence fournisseur ${supplier.companyName}`,
+  });
+  revalidatePath(`/suppliers/${parsed.supplierId}`);
+  revalidatePath("/suppliers");
+  revalidatePath("/documents");
+  redirect(`/suppliers/${parsed.supplierId}?attached=1`);
 }
 
 export async function updateSupplierStatusAction(formData: FormData) {

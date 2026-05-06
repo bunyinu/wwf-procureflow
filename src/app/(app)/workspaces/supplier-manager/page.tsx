@@ -15,7 +15,7 @@ export default async function SupplierManagerWorkspacePage() {
   await requireWorkspaceRole(Role.SUPPLIER_MANAGER);
   const workspace = WORKSPACE_BY_ROLE.SUPPLIER_MANAGER;
   const suppliers = await prisma.supplier.findMany({
-    include: { purchaseOrders: { include: { requisition: true } } },
+    include: { documents: true, purchaseOrders: { include: { requisition: true } } },
     orderBy: [{ status: "asc" }, { companyName: "asc" }],
   });
   const selected = suppliers[0];
@@ -44,7 +44,7 @@ export default async function SupplierManagerWorkspacePage() {
               <>
                 <Field label="Supplier status" value={<Badge className={SUPPLIER_STATUS_BADGE[selected.status as SupplierStatus]}>{SUPPLIER_STATUS_LABEL[selected.status as SupplierStatus]}</Badge>} />
                 <Field label="Prequalification status" value={selected.status === "PREQUALIFIED" ? "Prequalified" : "Not prequalified"} />
-                <Field label="Due diligence docs" value={selected.antiCorruptionSignedAt ? `Annexe B signed ${formatDate(selected.antiCorruptionSignedAt)}` : "Annexe B pending"} />
+                <Field label="Due diligence docs" value={`${selected.documents.length} document(s) · ${selected.antiCorruptionSignedAt ? `Annexe B signed ${formatDate(selected.antiCorruptionSignedAt)}` : "Annexe B pending"}`} />
                 <Field label="Supplier history" value={`${linkedOrders.length} linked order(s), score ${selected.score}/100`} />
                 <Field label="Email / phone" value={`${selected.email ?? "—"} · ${selected.phone ?? "—"}`} />
                 <Field label="Address" value={selected.address ?? "—"} />
@@ -65,6 +65,7 @@ export default async function SupplierManagerWorkspacePage() {
                 </Badge>
                 <ul className="space-y-1.5 text-ink-700">
                   <li>Tax ID verified: {selected.taxId ? "yes" : "pending"}</li>
+                  <li>Documents uploaded: {selected.documents.length}</li>
                   <li>Anti-corruption attestation: {selected.antiCorruptionSignedAt ? "signed" : "pending"}</li>
                   <li>Prequalification decision: {selected.status}</li>
                   <li>Blocked/pending/approved status controlled here only.</li>

@@ -183,7 +183,7 @@ const FAQ: Array<{ q: string; a: string }> = [
   },
   {
     q: "Pourquoi mon e-mail ne reçoit-il rien ?",
-    a: "Le prototype affiche les notifications dans l'application uniquement (icône cloche). En production, les notifications sont aussi envoyées par e-mail (SMTP) et SMS.",
+    a: "La plateforme affiche les notifications dans l'application (icône cloche). Le canal e-mail/SMS est activable via la configuration SMTP et passerelle SMS.",
   },
   {
     q: "Comment exporter mes données ?",

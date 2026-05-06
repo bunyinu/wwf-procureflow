@@ -13,7 +13,9 @@ import { Badge } from "@/components/Badge";
 import { EmptyState } from "@/components/EmptyState";
 import {
   DOCUMENT_CATEGORY_LABEL,
+  SUPPLIER_DOCUMENT_CATEGORY_LABEL,
   type DocumentCategory,
+  type SupplierDocumentCategory,
 } from "@/lib/enums";
 import { formatDate } from "@/lib/format";
 
@@ -46,11 +48,28 @@ export default async function DocumentsPage({
     take: 100,
   });
 
+  const supplierDocs = await prisma.supplierDocument.findMany({
+    where: {
+      ...(q
+        ? {
+            OR: [
+              { fileName: { contains: q } },
+              { supplier: { companyName: { contains: q } } },
+              { supplier: { taxId: { contains: q } } },
+            ],
+          }
+        : {}),
+    },
+    include: { supplier: true, uploadedBy: true },
+    orderBy: { uploadedAt: "desc" },
+    take: 100,
+  });
+
   const counts = await prisma.document.groupBy({
     by: ["documentCategory"],
     _count: { _all: true },
   });
-  const total = counts.reduce((s, c) => s + c._count._all, 0);
+  const total = counts.reduce((s, c) => s + c._count._all, 0) + supplierDocs.length;
 
   return (
     <div className="space-y-5">
@@ -143,6 +162,59 @@ export default async function DocumentsPage({
               </Link>
             ))}
           </div>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="Documents fournisseurs"
+          description="Diligence raisonnable : RCCM, NIF, attestation fiscale, Annexe B et références."
+        />
+        <CardBody className="px-0 py-0">
+          {supplierDocs.length === 0 ? (
+            <div className="px-5 py-6 text-sm text-ink-500">
+              Aucun document fournisseur trouvé.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-ink-100 text-left text-[11px] uppercase tracking-wide text-ink-500">
+                    <th className="px-5 py-2.5 font-medium">Fichier</th>
+                    <th className="px-5 py-2.5 font-medium">Catégorie</th>
+                    <th className="px-5 py-2.5 font-medium">Fournisseur</th>
+                    <th className="px-5 py-2.5 font-medium">Déposé par</th>
+                    <th className="px-5 py-2.5 font-medium">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {supplierDocs.map((document) => (
+                    <tr key={document.id} className="border-b border-ink-50 transition hover:bg-ink-50/60">
+                      <td className="px-5 py-3">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-ink-400" />
+                          <span className="font-medium text-ink-800">{document.fileName}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-3">
+                        <Badge className="bg-rose-50 text-rose-700 ring-1 ring-rose-100">
+                          {SUPPLIER_DOCUMENT_CATEGORY_LABEL[document.documentCategory as SupplierDocumentCategory] ?? document.documentCategory}
+                        </Badge>
+                      </td>
+                      <td className="px-5 py-3">
+                        <Link href={`/suppliers/${document.supplierId}`} className="text-ink-700 hover:text-wwf-700">
+                          {document.supplier.companyName}
+                        </Link>
+                        <div className="text-[11px] text-ink-500">{document.supplier.taxId ?? "—"}</div>
+                      </td>
+                      <td className="px-5 py-3 text-xs text-ink-600">{document.uploadedBy.fullName}</td>
+                      <td className="px-5 py-3 text-xs text-ink-500">{formatDate(document.uploadedAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardBody>
       </Card>
 

@@ -8,6 +8,7 @@ import {
   ProcurementType,
   RequisitionStatus,
   Role,
+  SupplierDocumentCategory,
   SupplierStatus,
 } from "../src/lib/enums";
 
@@ -34,6 +35,7 @@ function dayBefore(date: Date | null, fallbackDaysAgo: number): Date {
 
 async function main() {
   await prisma.auditLog.deleteMany();
+  await prisma.supplierDocument.deleteMany();
   await prisma.document.deleteMany();
   await prisma.goodsReceipt.deleteMany();
   await prisma.purchaseOrder.deleteMany();
@@ -345,6 +347,31 @@ async function main() {
       documentCategory: DocumentCategory.JUSTIFICATION,
     },
   });
+
+  await Promise.all([
+    prisma.supplierDocument.create({
+      data: {
+        supplierId: supplier["CongoTech SARL"].id,
+        fileName: "annexe-b-congotech.pdf",
+        fileType: "application/pdf",
+        fileSize: 96000,
+        fileUrl: "/placeholder/suppliers/annexe-b-congotech.pdf",
+        uploadedById: user["supplier@tsc.demo"].id,
+        documentCategory: SupplierDocumentCategory.ANTI_CORRUPTION,
+      },
+    }),
+    prisma.supplierDocument.create({
+      data: {
+        supplierId: supplier["MotorPlus RDC"].id,
+        fileName: "attestation-fiscale-motorplus.pdf",
+        fileType: "application/pdf",
+        fileSize: 84000,
+        fileUrl: "/placeholder/suppliers/attestation-fiscale-motorplus.pdf",
+        uploadedById: user["supplier@tsc.demo"].id,
+        documentCategory: SupplierDocumentCategory.TAX_CLEARANCE,
+      },
+    }),
+  ]);
 
   const auditRows = [
     ...requests.map((request) => ({

@@ -17,6 +17,7 @@ import {
   PO_STATUS_LABEL,
   RECEIPT_TYPE_LABEL,
   DOCUMENT_CATEGORY_LABEL,
+  PRIORITY_LABEL,
   type ProcurementType,
   type POStatus,
   type ReceiptType,
@@ -42,6 +43,9 @@ import {
   rejectDecisionAction,
   returnDecisionAction,
   submitRequisitionAction,
+  createQuoteAction,
+  markQuoteWinnerAction,
+  updateRequisitionAction,
 } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -108,9 +112,21 @@ export default async function RequisitionDetail({
   });
 
   const suppliers = await prisma.supplier.findMany({
-    where: { status: "PREQUALIFIED" },
-    orderBy: { companyName: "asc" },
+    where: { status: "PREQUALIFIED", dueDiligenceStatus: "CLEARED" },
+    orderBy: [{ score: "desc" }, { companyName: "asc" }],
   });
+  const canEdit = can(user, "update", "requisition", requisitionScope);
+  const [departments, projects, budgetLines] = canEdit
+    ? await Promise.all([
+        prisma.department.findMany({ orderBy: { name: "asc" } }),
+        prisma.project.findMany({ where: { active: true }, orderBy: { projectCode: "asc" } }),
+        prisma.budgetLine.findMany({
+          where: { active: true },
+          include: { project: true },
+          orderBy: { code: "asc" },
+        }),
+      ])
+    : [[], [], []];
 
   const tier = approvalTier(req.amount);
   const remaining =
@@ -143,6 +159,14 @@ export default async function RequisitionDetail({
     req.purchaseOrders.length > 0;
   const canClose =
     user.role === "PROCUREMENT" && req.status === "RECEIVED";
+  const canManageQuotes =
+    user.role === "PROCUREMENT" &&
+    [
+      "PROCUREMENT_REVIEW",
+      "THRESHOLD_REVIEW",
+      "PO_CREATED",
+    ].includes(req.status);
+  const winningQuote = req.quotes.find((quote) => quote.isWinner);
 
   if (searchParams.invalid || searchParams.error === "invalid") {
     redirect(`/requisitions/${req.id}`);
@@ -313,8 +337,213 @@ export default async function RequisitionDetail({
             </CardBody>
           </Card>
 
+          {canEdit ? (
+            <Card>
+              <CardHeader
+                title="Modifier la réquisition"
+                description="Disponible uniquement au demandeur tant que le dossier est brouillon ou retourné."
+              />
+              <CardBody>
+                <form action={updateRequisitionAction} className="space-y-4">
+                  <input type="hidden" name="id" value={req.id} />
+                  <div>
+                    <label className="text-xs font-medium text-ink-700">Objet</label>
+                    <input
+                      name="title"
+                      defaultValue={req.title}
+                      required
+                      className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-ink-700">Description</label>
+                    <textarea
+                      name="description"
+                      defaultValue={req.description ?? ""}
+                      required
+                      rows={3}
+                      className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm"
+                    />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div>
+                      <label className="text-xs font-medium text-ink-700">Département</label>
+                      <select name="departmentId" defaultValue={req.departmentId} required className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm">
+                        {departments.map((department) => (
+                          <option key={department.id} value={department.id}>{department.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-ink-700">Projet</label>
+                      <select name="projectId" defaultValue={req.projectId} required className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm">
+                        {projects.map((project) => (
+                          <option key={project.id} value={project.id}>{project.projectCode} · {project.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-ink-700">Ligne budgétaire</label>
+                      <select name="budgetLineId" defaultValue={req.budgetLineId} required className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm">
+                        {budgetLines.map((line) => (
+                          <option key={line.id} value={line.id}>{line.code} · {line.project.projectCode}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-4">
+                    <div>
+                      <label className="text-xs font-medium text-ink-700">Quantité</label>
+                      <input name="quantity" type="number" min="1" defaultValue={req.quantity} required className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-ink-700">Unité</label>
+                      <input name="unit" defaultValue={req.unit} required className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-ink-700">Montant</label>
+                      <input name="amount" type="number" min="1" step="0.01" defaultValue={req.amount} required className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-ink-700">Devise</label>
+                      <input name="currency" defaultValue={req.currency} required className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm" />
+                    </div>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="text-xs font-medium text-ink-700">Priorité</label>
+                      <select name="priority" defaultValue={req.priority} className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm">
+                        {Object.entries(PRIORITY_LABEL).map(([key, label]) => (
+                          <option key={key} value={key}>{label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-ink-700">Date livraison souhaitée</label>
+                      <input
+                        name="expectedDeliveryDate"
+                        type="date"
+                        defaultValue={req.expectedDeliveryDate?.toISOString().slice(0, 10) ?? ""}
+                        className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-ink-700">Justification</label>
+                    <textarea
+                      name="justification"
+                      defaultValue={req.justification}
+                      required
+                      rows={3}
+                      className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="submit" name="intent" value="draft" className="rounded-md border border-ink-200 bg-white px-4 py-2 text-sm font-medium text-ink-700 hover:bg-ink-50">
+                      Sauvegarder
+                    </button>
+                    <button type="submit" name="intent" value="submit" className="rounded-md bg-wwf-700 px-4 py-2 text-sm font-medium text-white hover:bg-wwf-800">
+                      Soumettre
+                    </button>
+                  </div>
+                </form>
+              </CardBody>
+            </Card>
+          ) : null}
+
           {req.quotes.length > 0 ? (
             <QuoteAnalysis quotes={req.quotes} />
+          ) : null}
+
+          {canManageQuotes ? (
+            <Card>
+              <CardHeader
+                title="Offres fournisseurs"
+                description="Achats recueille les offres, compare les montants/délais/scores, puis retient une offre."
+              />
+              <CardBody className="space-y-4">
+                <form action={createQuoteAction} className="grid gap-3 rounded-lg border border-ink-100 bg-ink-50/40 p-4 sm:grid-cols-2">
+                  <input type="hidden" name="requisitionId" value={req.id} />
+                  <div>
+                    <label className="text-xs font-medium text-ink-700">
+                      Fournisseur préqualifié
+                    </label>
+                    <select name="supplierId" required className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm">
+                      {suppliers.map((supplier) => (
+                        <option key={supplier.id} value={supplier.id}>
+                          {supplier.companyName} · score {supplier.score}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-ink-700">
+                      Montant offre
+                    </label>
+                    <div className="mt-1 grid grid-cols-[1fr_90px] gap-2">
+                      <input name="amount" type="number" min="1" step="0.01" defaultValue={req.amount} required className="rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm" />
+                      <input name="currency" defaultValue={req.currency} className="rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-ink-700">
+                      Délai livraison (jours)
+                    </label>
+                    <input name="leadTimeDays" type="number" min="1" defaultValue="10" className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-ink-700">
+                      Score technique /100
+                    </label>
+                    <input name="technicalScore" type="number" min="0" max="100" defaultValue="80" required className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-ink-700">
+                      Conditions paiement
+                    </label>
+                    <input name="paymentTerms" defaultValue="30 days" className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm" />
+                  </div>
+                  <label className="flex items-end gap-2 pb-2 text-xs text-ink-700">
+                    <input type="checkbox" name="isWinner" className="h-4 w-4 rounded border-ink-300 text-wwf-600" />
+                    Marquer comme offre retenue
+                  </label>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-medium text-ink-700">
+                      Justification / analyse
+                    </label>
+                    <textarea name="notes" rows={2} placeholder="Résumé de l'analyse technique et financière." className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <button type="submit" className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700">
+                      Enregistrer l&apos;offre
+                    </button>
+                  </div>
+                </form>
+
+                {req.quotes.length > 0 ? (
+                  <div className="space-y-2">
+                    <div className="text-[11px] font-medium uppercase tracking-wide text-ink-500">
+                      Sélection de l&apos;offre retenue
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {req.quotes.map((quote) => (
+                        <form key={quote.id} action={markQuoteWinnerAction}>
+                          <input type="hidden" name="quoteId" value={quote.id} />
+                          <button
+                            type="submit"
+                            disabled={quote.isWinner}
+                            className="rounded-md border border-ink-200 bg-white px-3 py-1.5 text-xs font-medium text-ink-700 hover:border-wwf-300 hover:text-wwf-700 disabled:cursor-not-allowed disabled:border-wwf-200 disabled:bg-wwf-50 disabled:text-wwf-700"
+                          >
+                            {quote.isWinner ? "Retenu · " : "Retenir · "}
+                            {quote.supplier.companyName}
+                          </button>
+                        </form>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </CardBody>
+            </Card>
           ) : null}
 
           {canDecide ? (
@@ -453,6 +682,7 @@ export default async function RequisitionDetail({
                       {suppliers.map((s) => (
                         <option key={s.id} value={s.id}>
                           {s.companyName} (score {s.score})
+                          {winningQuote?.supplierId === s.id ? " · offre retenue" : ""}
                         </option>
                       ))}
                     </select>
@@ -659,8 +889,8 @@ export default async function RequisitionDetail({
               {overBudget ? (
                 <div className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 ring-1 ring-amber-200">
                   Exception budgétaire — la demande nécessite une revue de seuil
-                  approfondie. La soumission n&apos;est pas bloquée dans le
-                  prototype.
+                  approfondie. La soumission reste tracée et routée selon les
+                  règles de validation.
                 </div>
               ) : null}
             </CardBody>

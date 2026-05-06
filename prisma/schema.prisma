@@ -28,6 +28,7 @@ model User {
   approvals          Approval[]
   receipts           GoodsReceipt[]        @relation("ReceiverReceipts")
   documents          Document[]            @relation("UploaderDocuments")
+  supplierDocuments  SupplierDocument[]    @relation("SupplierDocumentUploader")
   auditLogs          AuditLog[]            @relation("ActorAuditLogs")
 }
 
@@ -88,6 +89,7 @@ model Supplier {
 
   purchaseOrders PurchaseOrder[]
   quotes         Quote[]
+  documents      SupplierDocument[]
 }
 
 model PurchaseRequisition {
@@ -203,6 +205,21 @@ model Document {
 
   requisition PurchaseRequisition @relation(fields: [requisitionId], references: [id])
   uploadedBy  User                @relation("UploaderDocuments", fields: [uploadedById], references: [id])
+}
+
+model SupplierDocument {
+  id               String   @id @default(cuid())
+  supplierId       String
+  fileName         String
+  fileType         String
+  fileSize         Int
+  fileUrl          String
+  uploadedById     String
+  documentCategory String
+  uploadedAt       DateTime @default(now())
+
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+  uploadedBy User     @relation("SupplierDocumentUploader", fields: [uploadedById], references: [id])
 }
 
 model AuditLog {

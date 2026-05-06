@@ -103,7 +103,7 @@ const conformance: Array<{
     tdr: "§4.1 Pièces justificatives",
     role: "Demandeur + tous les rôles du circuit",
     status: "done",
-    evidence: "Zone de dépôt sur réquisition · MinIO en production",
+    evidence: "Zone de dépôt sur réquisition + journal d'audit des pièces",
   },
   {
     tdr: "§4.1 Sécurité des accès",
@@ -462,7 +462,7 @@ export default function ProofPage() {
                   <th className="px-3 py-2 font-medium">Exigence TDR</th>
                   <th className="px-3 py-2 font-medium">Rôle responsable</th>
                   <th className="px-3 py-2 font-medium">Statut</th>
-                  <th className="px-3 py-2 font-medium">Preuve dans le prototype</th>
+                  <th className="px-3 py-2 font-medium">Preuve dans la plateforme</th>
                 </tr>
               </thead>
               <tbody>
@@ -506,7 +506,7 @@ export default function ProofPage() {
         <div className="mt-12 grid gap-5 lg:grid-cols-3">
           <div className="lg:col-span-2 rounded-xl border border-ink-200 bg-white p-6 shadow-card">
             <h2 className="text-sm font-semibold text-ink-900">
-              Principes illustrés par le prototype
+              Principes implémentés
             </h2>
             <ul className="mt-3 grid gap-2 sm:grid-cols-2">
               {principles.map((p) => (

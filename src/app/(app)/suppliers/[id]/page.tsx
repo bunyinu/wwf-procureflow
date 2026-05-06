@@ -12,12 +12,15 @@ import {
   SUPPLIER_STATUS_LABEL,
   PO_STATUS_BADGE,
   PO_STATUS_LABEL,
+  SUPPLIER_DOCUMENT_CATEGORY_LABEL,
   type DueDiligenceStatus,
   type SupplierStatus,
   type POStatus,
+  type SupplierDocumentCategory,
 } from "@/lib/enums";
-import { ShieldCheck } from "lucide-react";
+import { FileText, ShieldCheck, UploadCloud } from "lucide-react";
 import {
+  attachSupplierDocumentAction,
   toggleAntiCorruptionAction,
   updateSupplierStatusAction,
 } from "../actions";
@@ -45,6 +48,10 @@ export default async function SupplierDetail({
       purchaseOrders: {
         include: { requisition: true },
         orderBy: { createdAt: "desc" },
+      },
+      documents: {
+        include: { uploadedBy: true },
+        orderBy: { uploadedAt: "desc" },
       },
     },
   });
@@ -172,6 +179,63 @@ export default async function SupplierDetail({
                   </li>
                 ))}
               </ul>
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Documents de diligence"
+              description="RCCM, NIF, attestation fiscale, Annexe B, références et pièces de préqualification."
+            />
+            <CardBody className="space-y-4">
+              {canEdit ? (
+                <form action={attachSupplierDocumentAction} className="rounded-lg border border-dashed border-ink-200 bg-ink-50/40 p-4">
+                  <input type="hidden" name="supplierId" value={supplier.id} />
+                  <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                    <label className="flex cursor-pointer items-center gap-2 rounded-md border border-ink-200 bg-white px-3 py-2 text-xs text-ink-700 hover:bg-ink-50">
+                      <UploadCloud className="h-4 w-4 text-ink-400" />
+                      <input type="file" name="file" required className="text-xs" />
+                    </label>
+                    <select name="documentCategory" defaultValue="ANTI_CORRUPTION" className="rounded-md border border-ink-200 bg-white px-3 py-2 text-xs shadow-sm">
+                      {Object.entries(SUPPLIER_DOCUMENT_CATEGORY_LABEL).map(([key, label]) => (
+                        <option key={key} value={key}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button type="submit" className="mt-3 rounded-md bg-wwf-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-wwf-800">
+                    Joindre au fournisseur
+                  </button>
+                </form>
+              ) : null}
+
+              {supplier.documents.length === 0 ? (
+                <p className="text-sm text-ink-500">
+                  Aucun document de diligence chargé.
+                </p>
+              ) : (
+                <ul className="space-y-2 text-sm">
+                  {supplier.documents.map((document) => (
+                    <li key={document.id} className="flex items-center justify-between gap-3 rounded-md border border-ink-100 px-3 py-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <FileText className="h-4 w-4 shrink-0 text-ink-400" />
+                        <div className="min-w-0">
+                          <div className="truncate font-medium text-ink-800">
+                            {document.fileName}
+                          </div>
+                          <div className="text-[11px] text-ink-500">
+                            {SUPPLIER_DOCUMENT_CATEGORY_LABEL[document.documentCategory as SupplierDocumentCategory]} · {(document.fileSize / 1024).toFixed(0)} Ko · {document.uploadedBy.fullName}
+                          </div>
+                        </div>
+                      </div>
+                      <span className="shrink-0 text-[11px] text-ink-500">
+                        {formatDate(document.uploadedAt)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </CardBody>
           </Card>
 

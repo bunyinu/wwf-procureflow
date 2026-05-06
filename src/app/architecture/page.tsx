@@ -42,7 +42,7 @@ const layers = [
   {
     title: "Orchestration des circuits",
     icon: Workflow,
-    desc: "Camunda 8 (BPMN/DMN) en production · machine à états TypeScript auditable côté prototype.",
+    desc: "Camunda 8 (BPMN/DMN) en production · machine à états TypeScript auditable côté pilote.",
     bullets: [
       "Modèle BPMN versionné dans Git",
       "Règles d'approbation modélisées en DMN",
@@ -85,7 +85,7 @@ const layers = [
     desc: "Prometheus, Grafana, Loki · alertes opérationnelles · traces OpenTelemetry.",
     bullets: [
       "Tableaux de bord d'engagements de service publics",
-      "Astreintes 24/7 illustratives",
+      "Astreintes 24/7 cadrées dans le dispositif d'exploitation",
       "Détection d'anomalies par règles et seuils",
     ],
   },

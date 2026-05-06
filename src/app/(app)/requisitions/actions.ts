@@ -127,6 +127,104 @@ export async function createRequisitionAction(formData: FormData) {
   redirect(`/requisitions/${created.id}`);
 }
 
+const updateRequisitionSchema = requisitionSchema.extend({
+  id: z.string().min(1),
+});
+
+export async function updateRequisitionAction(formData: FormData) {
+  const user = await requireUser();
+  const result = updateRequisitionSchema.safeParse({
+    id: formData.get("id"),
+    title: optionalFormString(formData.get("title")),
+    description: formData.get("description"),
+    quantity: formData.get("quantity") || 1,
+    unit: formData.get("unit") || "unité",
+    departmentId: formData.get("departmentId"),
+    projectId: formData.get("projectId"),
+    budgetLineId: formData.get("budgetLineId"),
+    amount: formData.get("amount"),
+    currency: formData.get("currency") || "USD",
+    priority: formData.get("priority"),
+    expectedDeliveryDate: optionalFormString(formData.get("expectedDeliveryDate")),
+    justification: formData.get("justification"),
+  });
+  const id = String(formData.get("id") ?? "");
+  if (!result.success) {
+    const msg = encodeURIComponent(
+      result.error.issues
+        .map((i) => `${i.path.join(".")} : ${i.message}`)
+        .join(" · "),
+    );
+    redirect(`/requisitions/${id}?error=${msg}`);
+  }
+
+  const parsed = result.data;
+  const req = await prisma.purchaseRequisition.findUnique({
+    where: { id: parsed.id },
+  });
+  if (!req) redirect("/requisitions?error=not_found");
+
+  assertCan(
+    user,
+    "update",
+    "requisition",
+    { requisition: { requesterId: req.requesterId, status: req.status } },
+    `/requisitions/${parsed.id}?denied=1`,
+  );
+
+  const submit = formData.get("intent") === "submit";
+  const title = parsed.title?.trim() || parsed.description.trim().slice(0, 90);
+  const newStatus = submit
+    ? RequisitionStatus.HIERARCHICAL_REVIEW
+    : (req.status as RequisitionStatus);
+
+  await prisma.purchaseRequisition.update({
+    where: { id: parsed.id },
+    data: {
+      title,
+      description: parsed.description,
+      quantity: parsed.quantity,
+      unit: parsed.unit,
+      departmentId: parsed.departmentId,
+      projectId: parsed.projectId,
+      budgetLineId: parsed.budgetLineId,
+      amount: parsed.amount,
+      currency: parsed.currency,
+      priority: parsed.priority,
+      justification: parsed.justification,
+      expectedDeliveryDate: parsed.expectedDeliveryDate
+        ? new Date(parsed.expectedDeliveryDate)
+        : null,
+      ...(submit
+        ? {
+            status: newStatus,
+            currentApproverRole: Role.APPROVER,
+            submittedAt: new Date(),
+          }
+        : {}),
+    },
+  });
+
+  await logAudit({
+    actorId: user.id,
+    actorRole: user.role as Role,
+    action: submit ? "REQUISITION_UPDATED_AND_SUBMITTED" : "REQUISITION_UPDATED",
+    entityType: "PurchaseRequisition",
+    entityId: parsed.id,
+    oldValue: `${req.title} / ${req.amount} ${req.currency}`,
+    newValue: `${title} / ${parsed.amount} ${parsed.currency}`,
+    comment: submit
+      ? "Demandeur a corrigé le dossier et l'a soumis pour validation hiérarchique."
+      : "Demandeur a sauvegardé les modifications du brouillon/dossier retourné.",
+  });
+
+  revalidatePath(`/requisitions/${parsed.id}`);
+  revalidatePath("/requisitions");
+  revalidatePath("/workspaces/requester");
+  revalidatePath("/workspaces/approver");
+  redirect(`/requisitions/${parsed.id}`);
+}
+
 export async function submitRequisitionAction(formData: FormData) {
   const user = await requireUser();
   const id = String(formData.get("id"));
@@ -222,6 +320,141 @@ export async function selectProcurementMethodAction(formData: FormData) {
   revalidatePath("/procurement");
   revalidatePath("/workspaces/procurement");
   redirect(`/workspaces/procurement?selected=${parsed.id}`);
+}
+
+const quoteSchema = z.object({
+  requisitionId: z.string().min(1),
+  supplierId: z.string().min(1),
+  amount: z.coerce.number().positive(),
+  currency: z.string().min(3).max(4).default("USD"),
+  leadTimeDays: z.coerce.number().int().positive().optional(),
+  paymentTerms: z.string().optional(),
+  technicalScore: z.coerce.number().int().min(0).max(100),
+  notes: z.string().optional(),
+  isWinner: z.string().optional(),
+});
+
+const QUOTE_MANAGEMENT_STATUSES: RequisitionStatus[] = [
+  RequisitionStatus.PROCUREMENT_REVIEW,
+  RequisitionStatus.THRESHOLD_REVIEW,
+  RequisitionStatus.PO_CREATED,
+];
+
+export async function createQuoteAction(formData: FormData) {
+  const user = await requireUser();
+  const result = quoteSchema.safeParse({
+    requisitionId: formData.get("requisitionId"),
+    supplierId: formData.get("supplierId"),
+    amount: formData.get("amount"),
+    currency: formData.get("currency") || "USD",
+    leadTimeDays: optionalFormString(formData.get("leadTimeDays")),
+    paymentTerms: optionalFormString(formData.get("paymentTerms")),
+    technicalScore: formData.get("technicalScore") || 0,
+    notes: optionalFormString(formData.get("notes")),
+    isWinner: optionalFormString(formData.get("isWinner")),
+  });
+  if (!result.success) {
+    const id = String(formData.get("requisitionId") ?? "");
+    redirect(`/requisitions/${id}?error=${encodeURIComponent("Offre fournisseur invalide")}`);
+  }
+  const parsed = result.data;
+  const req = await prisma.purchaseRequisition.findUnique({
+    where: { id: parsed.requisitionId },
+  });
+  if (!req) redirect("/procurement?error=missing_request");
+  if (
+    user.role !== Role.PROCUREMENT ||
+    !QUOTE_MANAGEMENT_STATUSES.includes(req.status as RequisitionStatus)
+  ) {
+    redirect(`/requisitions/${parsed.requisitionId}?denied=1`);
+  }
+  const supplier = await prisma.supplier.findUnique({ where: { id: parsed.supplierId } });
+  if (
+    !supplier ||
+    supplier.status !== "PREQUALIFIED" ||
+    supplier.dueDiligenceStatus !== "CLEARED"
+  ) {
+    redirect(`/requisitions/${parsed.requisitionId}?error=${encodeURIComponent("Fournisseur non préqualifié ou diligence non validée")}`);
+  }
+
+  const markWinner = parsed.isWinner === "on";
+  await prisma.$transaction([
+    ...(markWinner
+      ? [
+          prisma.quote.updateMany({
+            where: { requisitionId: parsed.requisitionId },
+            data: { isWinner: false },
+          }),
+        ]
+      : []),
+    prisma.quote.create({
+      data: {
+        requisitionId: parsed.requisitionId,
+        supplierId: parsed.supplierId,
+        amount: parsed.amount,
+        currency: parsed.currency,
+        leadTimeDays: parsed.leadTimeDays ?? null,
+        paymentTerms: parsed.paymentTerms ?? null,
+        technicalScore: parsed.technicalScore,
+        notes: parsed.notes ?? null,
+        isWinner: markWinner,
+      },
+    }),
+  ]);
+  await logAudit({
+    actorId: user.id,
+    actorRole: user.role as Role,
+    action: markWinner ? "QUOTE_RECEIVED_WINNER" : "QUOTE_RECEIVED",
+    entityType: "PurchaseRequisition",
+    entityId: parsed.requisitionId,
+    newValue: `${supplier.companyName} / ${parsed.amount} ${parsed.currency}`,
+    comment: parsed.notes ?? "Offre fournisseur reçue pour analyse.",
+  });
+  revalidatePath(`/requisitions/${parsed.requisitionId}`);
+  revalidatePath("/procurement");
+  revalidatePath("/workspaces/procurement");
+  redirect(`/requisitions/${parsed.requisitionId}`);
+}
+
+const quoteWinnerSchema = z.object({
+  quoteId: z.string().min(1),
+});
+
+export async function markQuoteWinnerAction(formData: FormData) {
+  const user = await requireUser();
+  const result = quoteWinnerSchema.safeParse({ quoteId: formData.get("quoteId") });
+  if (!result.success) redirect("/procurement?error=invalid_quote");
+  const quote = await prisma.quote.findUnique({
+    where: { id: result.data.quoteId },
+    include: { requisition: true, supplier: true },
+  });
+  if (!quote) redirect("/procurement?error=missing_quote");
+  if (
+    user.role !== Role.PROCUREMENT ||
+    !QUOTE_MANAGEMENT_STATUSES.includes(quote.requisition.status as RequisitionStatus)
+  ) {
+    redirect(`/requisitions/${quote.requisitionId}?denied=1`);
+  }
+  await prisma.$transaction([
+    prisma.quote.updateMany({
+      where: { requisitionId: quote.requisitionId },
+      data: { isWinner: false },
+    }),
+    prisma.quote.update({ where: { id: quote.id }, data: { isWinner: true } }),
+  ]);
+  await logAudit({
+    actorId: user.id,
+    actorRole: user.role as Role,
+    action: "QUOTE_WINNER_SELECTED",
+    entityType: "PurchaseRequisition",
+    entityId: quote.requisitionId,
+    newValue: quote.supplier.companyName,
+    comment: "Offre retenue pour attribution du marché.",
+  });
+  revalidatePath(`/requisitions/${quote.requisitionId}`);
+  revalidatePath("/procurement");
+  revalidatePath("/workspaces/procurement");
+  redirect(`/requisitions/${quote.requisitionId}`);
 }
 
 const decisionSchema = z.object({
