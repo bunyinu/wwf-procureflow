@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { Bell, Leaf, LogOut, ShieldCheck } from "lucide-react";
+import { Bell, LogOut } from "lucide-react";
 import { ROLE_LABELS } from "@/lib/workflow";
 import type { Role } from "@/lib/enums";
 import { logoutAction } from "@/app/(auth)/actions";
-import { WORKSPACE_BY_ROLE } from "@/lib/workspaces";
 
 const ROLE_ACCENT: Record<Role, string> = {
   REQUESTER: "bg-sky-50 text-sky-700 ring-sky-100",
@@ -27,24 +26,17 @@ export function Topbar({
   email: string;
   unreadCount: number;
 }) {
-  const workspace = WORKSPACE_BY_ROLE[role];
   return (
-    <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between border-b border-ink-200/70 bg-white/76 px-5 backdrop-blur-xl supports-[backdrop-filter]:bg-white/66">
+    <header className="sticky top-0 z-20 flex h-[66px] items-center justify-between border-b border-slate-200 bg-white px-6 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
       <div className="flex min-w-0 items-center gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-wwf-900 text-white shadow-soft ring-1 ring-white/70 lg:hidden">
-          <Leaf className="h-4 w-4" />
-        </span>
-        <div className="hidden min-w-0 lg:block">
-          <div className="truncate text-sm font-semibold text-ink-950">
-            {workspace.title}
+        <div className="min-w-0">
+          <div className="truncate text-[13px] font-bold text-[#0f2945]">
+            Bienvenue, {fullName}
           </div>
-          <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-ink-500">
-            <ShieldCheck className="h-3 w-3 text-wwf-700" />
-            Route séparée · droits appliqués côté serveur · audit actif
-          </div>
+          <div className="mt-0.5 text-[11px] text-slate-500">{ROLE_LABELS[role]}</div>
         </div>
         <span
-          className={`hidden items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 xl:inline-flex ${ROLE_ACCENT[role]}`}
+          className={`hidden items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 lg:inline-flex ${ROLE_ACCENT[role]}`}
         >
           <span
             className="h-1.5 w-1.5 rounded-full bg-current opacity-70"
@@ -56,7 +48,7 @@ export function Topbar({
       <div className="flex items-center gap-3">
         <Link
           href="/notifications"
-          className="lift relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-ink-200 bg-white text-ink-600 hover:border-wwf-300 hover:text-wwf-700"
+          className="relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:text-blue-700"
           aria-label="Notifications"
         >
           <Bell className="h-4 w-4" />
@@ -67,12 +59,12 @@ export function Topbar({
           ) : null}
         </Link>
         <div className="hidden text-right md:block">
-          <div className="text-sm font-medium leading-tight text-ink-800">
-            {fullName}
+          <div className="text-[12px] font-semibold leading-tight text-[#0f2945]">
+            {email}
           </div>
-          <div className="text-[11px] text-ink-500">{email}</div>
+          <div className="text-[10px] text-slate-500">Session sécurisée</div>
         </div>
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-wwf-100 to-wwf-200 text-sm font-semibold text-wwf-800 ring-1 ring-wwf-200">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#061d39] text-[11px] font-bold text-white ring-2 ring-white">
           {fullName
             .split(" ")
             .map((n) => n[0])
@@ -82,7 +74,7 @@ export function Topbar({
         <form action={logoutAction}>
           <button
             type="submit"
-            className="lift flex items-center gap-1.5 rounded-md border border-ink-200 bg-white px-3 py-1.5 text-xs font-medium text-ink-700 hover:border-ink-300"
+            className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300"
           >
             <LogOut className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Déconnexion</span>

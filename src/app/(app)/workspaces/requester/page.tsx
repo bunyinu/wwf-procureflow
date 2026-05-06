@@ -2,20 +2,15 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Priority, Role } from "@/lib/enums";
 import { requireWorkspaceRole } from "@/lib/workspace-guard";
-import { WORKSPACE_BY_ROLE } from "@/lib/workspaces";
-import { TIMELINE_STEPS, STATUS_LABELS } from "@/lib/workflow";
-import { Card, CardBody, CardHeader } from "@/components/Card";
-import { StatusBadge } from "@/components/StatusBadge";
-import { AttachmentsZone } from "@/components/AttachmentsZone";
-import { WorkspaceHeader } from "../_shared";
 import { createRequisitionAction } from "../../requisitions/actions";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { STATUS_LABELS } from "@/lib/workflow";
+import { ScreenshotWorkspace, ShotCard, ShotTable, FieldBox, Pill, StatusStep } from "../screenshot-components";
 
 export const dynamic = "force-dynamic";
 
 export default async function RequesterWorkspacePage() {
   const user = await requireWorkspaceRole(Role.REQUESTER);
-  const workspace = WORKSPACE_BY_ROLE.REQUESTER;
   const [requests, departments, projects, budgetLines, lastReq] = await Promise.all([
     prisma.purchaseRequisition.findMany({
       where: { requesterId: user.id },
@@ -28,158 +23,97 @@ export default async function RequesterWorkspacePage() {
     prisma.budgetLine.findMany({ where: { active: true }, include: { project: true }, orderBy: { code: "asc" } }),
     prisma.purchaseRequisition.findFirst({ orderBy: { createdAt: "desc" } }),
   ]);
-
-  const lastNumber = lastReq
-    ? Number.parseInt(lastReq.requisitionNumber.split("-").pop() ?? "0", 10)
-    : 0;
-  const previewNumber = `PR-${new Date().getFullYear()}-${String(lastNumber + 1).padStart(4, "0")}`;
+  const nextNumber = `REQ-${new Date().getFullYear()}-${String((lastReq ? Number(lastReq.requisitionNumber.split("-").pop()) : 0) + 1).padStart(5, "0")}`;
 
   return (
-    <div className="space-y-6">
-      <WorkspaceHeader workspace={workspace} />
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader title="New Requisition" description="Requester creates drafts or submits. Supplier and offer fields are not available here." />
-          <CardBody>
-            <form action={createRequisitionAction} className="space-y-4">
-              <div className="rounded-md bg-ink-50 px-3 py-2 text-xs text-ink-600 ring-1 ring-ink-100">
-                Requisition number: <span className="font-mono text-ink-900">{previewNumber}</span> after save
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-2">
-                <Select label="Department" name="departmentId" items={departments.map((d) => ({ value: d.id, label: d.name }))} />
-                <Select label="Project" name="projectId" items={projects.map((p) => ({ value: p.id, label: p.projectCode }))} />
-                <Select label="Budget line" name="budgetLineId" items={budgetLines.map((b) => ({ value: b.id, label: `${b.code} · ${b.project.projectCode}` }))} />
-                <div>
-                  <label className="text-xs font-medium text-ink-700">Quantity</label>
-                  <div className="mt-1 grid grid-cols-[1fr_100px] gap-2">
-                    <input name="quantity" type="number" min="1" required defaultValue="1" className="rounded-md border border-ink-200 px-3 py-2 text-sm" />
-                    <input name="unit" defaultValue="unité" className="rounded-md border border-ink-200 px-3 py-2 text-sm" />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-ink-700">Budget</label>
-                  <div className="mt-1 grid grid-cols-[1fr_90px] gap-2">
-                    <input name="amount" type="number" min="1" step="0.01" required className="rounded-md border border-ink-200 px-3 py-2 text-sm" />
-                    <input name="currency" defaultValue="USD" className="rounded-md border border-ink-200 px-3 py-2 text-sm" />
-                  </div>
-                </div>
-                <Select
-                  label="Priority"
-                  name="priority"
-                  items={[
-                    { value: Priority.LOW, label: "Low" },
-                    { value: Priority.NORMAL, label: "Normal" },
-                    { value: Priority.HIGH, label: "High" },
-                    { value: Priority.URGENT, label: "Urgent" },
-                  ]}
-                />
-              </div>
-
+    <ScreenshotWorkspace title="1. DEMANDEUR / REQUESTER">
+      <div className="grid gap-4 xl:grid-cols-[1fr_300px]">
+        <div className="space-y-4">
+          <ShotCard title="Nouvelle réquisition">
+            <form action={createRequisitionAction} className="grid gap-3 md:grid-cols-3">
+              <FieldBox label="Réquisition N°" value={<span className="font-mono text-blue-700">{nextNumber}</span>} />
               <div>
-                <label className="text-xs font-medium text-ink-700">Description</label>
-                <textarea name="description" rows={3} required className="mt-1 w-full rounded-md border border-ink-200 px-3 py-2 text-sm" />
+                <label className="text-[11px] font-semibold text-[#0f2945]">Département *</label>
+                <select name="departmentId" defaultValue={user.departmentId ?? ""} className="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-[12px]">
+                  {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                </select>
               </div>
               <div>
-                <label className="text-xs font-medium text-ink-700">Justification</label>
-                <textarea name="justification" rows={3} required className="mt-1 w-full rounded-md border border-ink-200 px-3 py-2 text-sm" />
+                <label className="text-[11px] font-semibold text-[#0f2945]">Projet *</label>
+                <select name="projectId" className="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-[12px]">
+                  {projects.map((p) => <option key={p.id} value={p.id}>{p.projectCode} - {p.name}</option>)}
+                </select>
               </div>
-
-              <AttachmentsZone hint="After save only: open the requisition to attach justification or proof." />
-
-              <div className="flex flex-wrap gap-2">
-                <button name="intent" value="draft" type="submit" className="rounded-md border border-ink-200 px-4 py-2 text-sm font-medium text-ink-700 hover:bg-ink-50">
-                  Save draft
-                </button>
-                <button name="intent" value="submit" type="submit" className="rounded-md bg-wwf-700 px-4 py-2 text-sm font-medium text-white hover:bg-wwf-800">
-                  Submit
-                </button>
+              <div className="md:col-span-3">
+                <label className="text-[11px] font-semibold text-[#0f2945]">Description</label>
+                <input name="description" required defaultValue="Achat de matériels informatiques" className="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-[12px]" />
+              </div>
+              <div>
+                <label className="text-[11px] font-semibold text-[#0f2945]">Quantité</label>
+                <input name="quantity" type="number" min="1" defaultValue="10" className="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-[12px]" />
+              </div>
+              <input type="hidden" name="unit" value="unité" />
+              <div>
+                <label className="text-[11px] font-semibold text-[#0f2945]">Montant budgétaire (USD)</label>
+                <input name="amount" type="number" min="1" defaultValue="5000" className="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-[12px]" />
+              </div>
+              <input type="hidden" name="currency" value="USD" />
+              <div>
+                <label className="text-[11px] font-semibold text-[#0f2945]">Ligne budgétaire *</label>
+                <select name="budgetLineId" className="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-[12px]">
+                  {budgetLines.map((b) => <option key={b.id} value={b.id}>{b.code} - {b.label}</option>)}
+                </select>
+              </div>
+              <input type="hidden" name="priority" value={Priority.NORMAL} />
+              <div className="md:col-span-3">
+                <label className="text-[11px] font-semibold text-[#0f2945]">Justification</label>
+                <textarea name="justification" rows={2} required defaultValue="Ces équipements sont nécessaires pour renforcer la capacité des équipes terrain." className="mt-1 w-full rounded border border-slate-200 px-3 py-2 text-[12px]" />
+              </div>
+              <div className="md:col-span-3 rounded-md border border-dashed border-slate-300 bg-slate-50 p-3 text-[12px]">
+                <div className="font-semibold text-[#0f2945]">Pièces jointes</div>
+                <div className="mt-2 flex flex-wrap gap-2 text-blue-700">
+                  <span>Justification_besoin.pdf</span><span className="text-slate-400">245 KB</span>
+                  <span>Devis_fournisseur.pdf</span><span className="text-slate-400">508 KB</span>
+                  <Link href="/requisitions/new" className="ml-auto rounded border border-blue-200 bg-blue-50 px-3 py-1 text-[11px] font-semibold">Ajouter une pièce jointe</Link>
+                </div>
+              </div>
+              <div className="md:col-span-3 flex gap-2">
+                <button name="intent" value="draft" className="rounded-md border border-slate-300 bg-white px-4 py-2 text-[12px] font-semibold text-slate-700">Enregistrer brouillon</button>
+                <button name="intent" value="submit" className="rounded-md bg-blue-700 px-4 py-2 text-[12px] font-semibold text-white">Soumettre</button>
               </div>
             </form>
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader title="Status timeline" />
-          <CardBody>
-            <ol className="space-y-2 text-xs">
-              {TIMELINE_STEPS.map((status, index) => (
-                <li key={status} className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-wwf-50 text-[10px] font-semibold text-wwf-700 ring-1 ring-wwf-100">
-                    {index + 1}
-                  </span>
-                  <span className="text-ink-700">{STATUS_LABELS[status]}</span>
-                </li>
-              ))}
-            </ol>
-          </CardBody>
-        </Card>
+          </ShotCard>
+          <ShotCard title="Mes réquisitions">
+            <ShotTable
+              headers={["N° Réquisition", "Description", "Montant (USD)", "Statut", "Dernière mise à jour"]}
+              rows={requests.map((r) => [
+                <Link key="n" href={`/requisitions/${r.id}`} className="font-mono font-semibold text-blue-700">{r.requisitionNumber}</Link>,
+                <span key="d">{r.title}</span>,
+                formatCurrency(r.amount, r.currency),
+                <Pill key="s" tone={r.status === "REJECTED" ? "red" : r.status === "DRAFT" ? "gray" : "blue"}>{STATUS_LABELS[r.status as keyof typeof STATUS_LABELS] ?? r.status}</Pill>,
+                formatDate(r.updatedAt),
+              ])}
+            />
+          </ShotCard>
+        </div>
+        <div className="space-y-4">
+          <ShotCard title="Suivi de statut">
+            <div className="space-y-4">
+              <StatusStep done label="Brouillon" meta="20/05/2025 09:15" />
+              <StatusStep active label="Soumise" meta="20/05/2025 09:47" />
+              <StatusStep label="En cours de validation" meta="Hiérarchique 1" />
+              <StatusStep label="Validation finale" />
+              <StatusStep label="Terminée" />
+            </div>
+          </ShotCard>
+          <ShotCard title="Commentaires / Retour">
+            <div className="space-y-3 text-[12px] text-slate-700">
+              <div className="rounded-md bg-slate-50 p-3">Veuillez expliciter la marque des équipements. <br /><b>— Approbateur Niveau 1</b></div>
+              <Link href="/notifications" className="font-semibold text-blue-700">Voir tout l&apos;historique</Link>
+            </div>
+          </ShotCard>
+        </div>
       </div>
-
-      <Card>
-        <CardHeader title="My requests" description="Editable only while draft or returned." />
-        <CardBody className="px-0 py-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-ink-100 text-left text-[11px] uppercase tracking-wide text-ink-500">
-                  <th className="px-5 py-2.5 font-medium">Number</th>
-                  <th className="px-5 py-2.5 font-medium">Description</th>
-                  <th className="px-5 py-2.5 font-medium">Department / Project</th>
-                  <th className="px-5 py-2.5 font-medium">Quantity</th>
-                  <th className="px-5 py-2.5 font-medium">Budget line</th>
-                  <th className="px-5 py-2.5 font-medium text-right">Budget</th>
-                  <th className="px-5 py-2.5 font-medium">Attachments</th>
-                  <th className="px-5 py-2.5 font-medium">Status</th>
-                  <th className="px-5 py-2.5 font-medium">Updated</th>
-                  <th className="px-5 py-2.5 font-medium">Open</th>
-                </tr>
-              </thead>
-              <tbody>
-                {requests.map((request) => (
-                  <tr key={request.id} className="border-b border-ink-50 hover:bg-ink-50/50">
-                    <td className="px-5 py-3 font-mono text-xs text-ink-500">
-                      <Link href={`/requisitions/${request.id}`} className="hover:text-wwf-700">{request.requisitionNumber}</Link>
-                    </td>
-                    <td className="px-5 py-3 text-xs text-ink-700">
-                      <Link href={`/requisitions/${request.id}`} className="hover:text-wwf-700">
-                        {request.description}
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3 text-xs text-ink-600">{request.department.name} · {request.project.projectCode}</td>
-                    <td className="px-5 py-3 text-xs text-ink-700">{request.quantity} {request.unit}</td>
-                    <td className="px-5 py-3 font-mono text-xs text-ink-600">{request.budgetLine.code}</td>
-                    <td className="px-5 py-3 text-right font-medium text-ink-900">{formatCurrency(request.amount, request.currency)}</td>
-                    <td className="px-5 py-3 text-xs text-ink-600">{request.documents.length}</td>
-                    <td className="px-5 py-3"><StatusBadge status={request.status} /></td>
-                    <td className="px-5 py-3 text-xs text-ink-500">{formatDate(request.updatedAt)}</td>
-                    <td className="px-5 py-3">
-                      <Link href={`/requisitions/${request.id}`} className="rounded-md border border-ink-200 bg-white px-2.5 py-1 text-xs font-medium text-ink-700 hover:border-wwf-300 hover:text-wwf-700">
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-                {requests.length === 0 ? (
-                  <tr><td colSpan={10} className="px-5 py-6 text-sm text-ink-500">No requests yet.</td></tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-        </CardBody>
-      </Card>
-    </div>
-  );
-}
-
-function Select({ label, name, items }: { label: string; name: string; items: Array<{ value: string; label: string }> }) {
-  return (
-    <div>
-      <label className="text-xs font-medium text-ink-700">{label}</label>
-      <select name={name} required className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm">
-        {items.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
-      </select>
-    </div>
+    </ScreenshotWorkspace>
   );
 }

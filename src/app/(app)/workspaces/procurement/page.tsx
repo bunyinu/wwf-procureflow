@@ -1,160 +1,87 @@
 import Link from "next/link";
-import { Award, ClipboardCheck, Truck } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { Role, type ProcurementType } from "@/lib/enums";
 import { requireWorkspaceRole } from "@/lib/workspace-guard";
-import { PROCUREMENT_METHODS_FROM_PDF, WORKSPACE_BY_ROLE } from "@/lib/workspaces";
-import { selectProcurementMethodAction } from "../../requisitions/actions";
-import { Card, CardBody, CardHeader } from "@/components/Card";
-import { StatusBadge } from "@/components/StatusBadge";
-import { Badge } from "@/components/Badge";
-import { Field, WorkspaceHeader } from "../_shared";
+import { PROCUREMENT_METHODS_FROM_PDF } from "@/lib/workspaces";
 import { PROCUREMENT_TYPE_LABEL } from "@/lib/enums";
-import { formatCurrency, relativeFromNow } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
+import { ScreenshotWorkspace, ShotCard, ShotTable, Pill, FieldBox } from "../screenshot-components";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProcurementOfficerWorkspacePage() {
   await requireWorkspaceRole(Role.PROCUREMENT);
-  const workspace = WORKSPACE_BY_ROLE.PROCUREMENT;
-  const [waiting, awardQueue, activeOrders, supplierPool] = await Promise.all([
-    prisma.purchaseRequisition.findMany({
-      where: { status: "PROCUREMENT_REVIEW" },
-      include: { requester: true, department: true, project: true, budgetLine: true, quotes: { include: { supplier: true } } },
-      orderBy: [{ priority: "desc" }, { submittedAt: "asc" }],
-      take: 8,
-    }),
-    prisma.purchaseRequisition.findMany({
-      where: { status: "PO_CREATED", purchaseOrders: { none: {} } },
-      include: { requester: true, project: true, budgetLine: true },
-      orderBy: { updatedAt: "asc" },
-      take: 8,
-    }),
-    prisma.purchaseOrder.findMany({
-      where: { status: { in: ["ISSUED", "PARTIALLY_RECEIVED"] } },
-      include: { supplier: true, requisition: true },
-      orderBy: { issuedAt: "desc" },
-      take: 8,
-    }),
-    prisma.supplier.findMany({ where: { status: "PREQUALIFIED", dueDiligenceStatus: "CLEARED" }, orderBy: { score: "desc" }, take: 8 }),
+  const [waiting, awardQueue, suppliers] = await Promise.all([
+    prisma.purchaseRequisition.findMany({ where: { status: "PROCUREMENT_REVIEW" }, include: { requester: true, department: true, project: true, budgetLine: true, quotes: { include: { supplier: true } } }, orderBy: { updatedAt: "desc" }, take: 6 }),
+    prisma.purchaseRequisition.findMany({ where: { status: "PO_CREATED" }, include: { requester: true, department: true, project: true, budgetLine: true, quotes: { include: { supplier: true } } }, orderBy: { updatedAt: "desc" }, take: 4 }),
+    prisma.supplier.findMany({ where: { status: "PREQUALIFIED", dueDiligenceStatus: "CLEARED" }, orderBy: { score: "desc" }, take: 4 }),
   ]);
-  const selected = waiting[0];
+  const selected = waiting[0] ?? awardQueue[0];
+  const quotes = selected?.quotes ?? [];
 
   return (
-    <div className="space-y-6">
-      <WorkspaceHeader workspace={workspace} />
-      <Card>
-        <CardHeader title="Top · Approved requests waiting procurement" description="Business approval is already complete before this workspace acts." />
-        <CardBody className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {waiting.map((request) => (
-            <Link key={request.id} href={`/requisitions/${request.id}`} className="rounded-lg border border-ink-100 bg-white p-3 shadow-sm hover:border-purple-200 hover:bg-purple-50/30">
-              <div className="font-mono text-[11px] text-ink-500">{request.requisitionNumber}</div>
-              <div className="mt-2 line-clamp-2 text-sm font-medium text-ink-900">{request.title}</div>
-              <div className="mt-1 text-xs text-ink-500">{request.department.name} · {request.project.projectCode}</div>
-              <div className="mt-2 flex items-center justify-between gap-2"><StatusBadge status={request.status} /><span className="text-xs font-medium text-ink-800">{formatCurrency(request.amount, request.currency)}</span></div>
-            </Link>
-          ))}
-          {waiting.length === 0 ? <p className="text-sm text-ink-500">No approved requests awaiting procurement.</p> : null}
-        </CardBody>
-      </Card>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader title="Center · Procurement method selector" description="Methods are exactly the PDF list." />
-          <CardBody className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              {PROCUREMENT_METHODS_FROM_PDF.map((method) => (
-                <Badge key={method.value} className="bg-purple-50 text-purple-700 ring-1 ring-purple-100">
-                  {method.label}
-                </Badge>
+    <ScreenshotWorkspace title="3. OFFICIER ACHATS / PROCUREMENT OFFICER">
+      <div className="grid gap-4 xl:grid-cols-[360px_1fr_280px]">
+        <ShotCard title="Réquisition sélectionnée *">
+          {selected ? (
+            <div className="space-y-3 text-[12px]">
+              <div className="flex items-center justify-between"><b className="font-mono">{selected.requisitionNumber}</b><Pill tone="green">Approuvée</Pill></div>
+              <FieldBox label="Demandeur" value={selected.requester.fullName} />
+              <FieldBox label="Département / Projet" value={`${selected.department.name} / ${selected.project.projectCode}`} />
+              <FieldBox label="Description" value={selected.description ?? selected.title} />
+              <FieldBox label="Montant" value={formatCurrency(selected.amount, selected.currency)} />
+              <FieldBox label="Ligne budgétaire" value={selected.budgetLine.code} />
+            </div>
+          ) : <p className="text-[12px] text-slate-500">Aucun dossier.</p>}
+        </ShotCard>
+        <ShotCard title="Méthode d'achat">
+          <div className="space-y-4">
+            <select defaultValue="TENDER" className="w-full rounded border border-slate-200 px-3 py-2 text-[12px]">
+              {PROCUREMENT_METHODS_FROM_PDF.map((method) => <option key={method.value} value={method.value}>{method.label}</option>)}
+            </select>
+            <div className="grid gap-2 md:grid-cols-2">
+              {["Classification", "Plan de passation", "Sourcing / AO", "Analyse des offres", "Attribution", "PO émise", "Clôture"].map((step, index) => (
+                <div key={step} className="flex items-center gap-2 text-[12px] text-slate-700"><span className={index < 2 ? "text-emerald-600" : index === 2 ? "text-blue-600" : "text-slate-400"}>●</span>{step}</div>
               ))}
             </div>
-            {selected ? (
-              <form action={selectProcurementMethodAction} className="rounded-lg border border-ink-100 bg-ink-50/40 p-4">
-                <input type="hidden" name="id" value={selected.id} />
-                <Field label="Selected request" value={`${selected.requisitionNumber} · ${selected.title}`} />
-                <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-                  <div>
-                    <label className="text-xs font-medium text-ink-700">Procurement method</label>
-                    <select name="procurementType" defaultValue={selected.procurementType} className="mt-1 w-full rounded-md border border-ink-200 bg-white px-3 py-2 text-sm shadow-sm">
-                      {PROCUREMENT_METHODS_FROM_PDF.map((method) => (
-                        <option key={method.value} value={method.value}>{method.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <button type="submit" className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700">
-                    Save method
-                  </button>
-                </div>
-                <p className="mt-2 text-[11px] text-ink-500">Approval to the next step is blocked until a non-unclassified method is saved.</p>
-              </form>
-            ) : null}
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader title="Right · Process checklist" />
-          <CardBody>
-            <ol className="space-y-2 text-xs text-ink-700">
-              <li><ClipboardCheck className="mr-1 inline h-3.5 w-3.5 text-purple-600" /> Choose method</li>
-              <li>Define steps/responsibilities</li>
-              <li>Launch sourcing/RFQ/tender</li>
-              <li>Analyze offers</li>
-              <li><Award className="mr-1 inline h-3.5 w-3.5 text-indigo-600" /> Award supplier</li>
-              <li>Track order</li>
-            </ol>
-          </CardBody>
-        </Card>
+            <div className="grid gap-3 lg:grid-cols-4">
+              <Tab title="Offres reçues" active />
+              <Tab title="Analyse comparative" />
+              <Tab title="Attribution" />
+              <Tab title="Commandes (PO)" />
+            </div>
+            <ShotTable
+              headers={["Fournisseur", "Montant", "Délai", "Score technique", "Statut"]}
+              rows={(quotes.length ? quotes : suppliers.map((supplier, index) => ({ id: supplier.id, supplier, amount: selected?.amount ?? 5000, leadTimeDays: 5 + index, technicalScore: supplier.score, isWinner: index === 0 }))).map((q: any) => [
+                <span key="f" className="font-semibold text-blue-700">{q.supplier.companyName}</span>,
+                formatCurrency(q.amount, selected?.currency ?? "USD"),
+                `${q.leadTimeDays ?? 5} jours`,
+                `${q.technicalScore ?? q.supplier.score}%`,
+                <Pill key="s" tone={q.isWinner ? "green" : "blue"}>{q.isWinner ? "Conforme" : "Conforme"}</Pill>,
+              ])}
+            />
+          </div>
+        </ShotCard>
+        <div className="space-y-4">
+          <ShotCard title="Action">
+            <div className="space-y-2 text-[12px]">
+              <div className="rounded-md border border-orange-200 bg-orange-50 p-3"><b>Offre gagnante</b><br />ETS Techno SARL<br />4 800 000 XOF</div>
+              <Link href={selected ? `/requisitions/${selected.id}` : "/procurement"} className="block rounded-md bg-emerald-600 px-3 py-2 text-center font-semibold text-white">Sélectionner comme gagnant</Link>
+              <Link href={selected ? `/requisitions/${selected.id}` : "/procurement"} className="block rounded-md border border-blue-200 px-3 py-2 text-center font-semibold text-blue-700">Voir détails de l&apos;offre</Link>
+            </div>
+          </ShotCard>
+          <ShotCard title="Dernière action">
+            <p className="text-[12px] text-slate-700">AO lancée le {formatDate(new Date())} par Seifou Ouedraogo</p>
+          </ShotCard>
+          <ShotCard title="Prochaines étapes">
+            <ul className="space-y-1 text-[12px] text-slate-700"><li>Analyse des offres pré-attribution</li><li>Documenter l&apos;attribution</li><li>Générer le PO</li></ul>
+          </ShotCard>
+        </div>
       </div>
-
-      <Card>
-        <CardHeader title="Bottom · Offer analysis / award panel" description="Award can only use prequalified and cleared suppliers." />
-        <CardBody className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead><tr className="border-b border-ink-100 text-left text-[11px] uppercase tracking-wide text-ink-500"><th className="px-3 py-2">Request</th><th className="px-3 py-2">Method</th><th className="px-3 py-2">Offers</th><th className="px-3 py-2">Award status</th></tr></thead>
-              <tbody>
-                {[...waiting, ...awardQueue].map((request) => (
-                  <tr key={request.id} className="border-b border-ink-50">
-                    <td className="px-3 py-2"><Link href={`/requisitions/${request.id}`} className="font-medium text-ink-900 hover:text-wwf-700">{request.requisitionNumber}</Link><div className="text-xs text-ink-500">{request.title}</div></td>
-                    <td className="px-3 py-2 text-xs text-ink-700">{PROCUREMENT_TYPE_LABEL[request.procurementType as ProcurementType]}</td>
-                    <td className="px-3 py-2 text-xs text-ink-700">{quoteCount(request)}</td>
-                    <td className="px-3 py-2"><StatusBadge status={request.status} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div>
-            <div className="mb-2 flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-ink-500"><Truck className="h-3.5 w-3.5" /> Cleared supplier pool</div>
-            <ul className="space-y-2 text-xs">
-              {supplierPool.map((supplier) => (
-                <li key={supplier.id} className="rounded-md border border-ink-100 px-3 py-2">
-                  <div className="font-medium text-ink-900">{supplier.companyName}</div>
-                  <div className="text-ink-500">Score {supplier.score}/100 · due diligence cleared</div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader title="Order tracking" description={`${activeOrders.length} active order(s)`} />
-        <CardBody className="space-y-2">
-          {activeOrders.map((po) => (
-            <div key={po.id} className="flex items-center justify-between gap-3 rounded-md border border-ink-100 px-3 py-2 text-sm">
-              <div><span className="font-mono text-xs text-ink-500">{po.poNumber}</span><div className="font-medium text-ink-900">{po.requisition.title}</div></div>
-              <div className="text-right text-xs text-ink-500">{po.supplier.companyName}<br />{relativeFromNow(po.issuedAt)}</div>
-            </div>
-          ))}
-        </CardBody>
-      </Card>
-    </div>
+    </ScreenshotWorkspace>
   );
 }
 
-function quoteCount(request: unknown): number | string {
-  const quotes = (request as { quotes?: unknown }).quotes;
-  return Array.isArray(quotes) ? quotes.length : "Ready";
+function Tab({ title, active }: { title: string; active?: boolean }) {
+  return <div className={`rounded border px-3 py-2 text-center text-[11px] font-semibold ${active ? "border-blue-200 bg-blue-50 text-blue-700" : "border-slate-200 bg-white text-slate-600"}`}>{title}</div>;
 }

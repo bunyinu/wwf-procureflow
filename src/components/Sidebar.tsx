@@ -49,101 +49,124 @@ const WORKSPACE_ICON: Record<Role, LucideIcon> = {
 const NAV_BY_ROLE: Record<Role, Section[]> = {
   REQUESTER: [
     {
-      title: "Requester Workspace",
+      title: "e-Procurement",
       items: [
-        { label: "Requester Workspace", href: "/workspaces/requester", icon: FileSignature },
-        { label: "New Requisition", href: "/requisitions/new", icon: FileSignature },
-        { label: "My requests", href: "/requisitions?scope=mine", icon: FileText },
-        { label: "Notifications", href: "/notifications", icon: Bell },
+        { label: "Tableau de bord", href: "/dashboard", icon: FileText },
+        { label: "Mes réquisitions", href: "/workspaces/requester", icon: FileSignature },
+        { label: "Nouvelle réquisition", href: "/requisitions/new", icon: FileSignature },
+        { label: "Mes brouillons", href: "/requisitions?scope=mine&status=DRAFT", icon: FileText },
+        { label: "Mes documents", href: "/requisitions?scope=mine", icon: FolderArchive },
+        { label: "Mes commentaires", href: "/notifications", icon: Bell },
       ],
     },
-    { title: "Support", items: [{ label: "User manual", href: "/aide", icon: HelpCircle }] },
+    { title: "Profil", items: [{ label: "Profil", href: "/aide", icon: HelpCircle }] },
   ],
   APPROVER: [
     {
-      title: "Approver Workspace",
+      title: "e-Procurement",
       items: [
-        { label: "Approver Workspace", href: "/workspaces/approver", icon: Inbox },
-        { label: "Approval queue", href: "/approvals", icon: Inbox },
-        { label: "Decision history", href: "/requisitions", icon: FileText },
-        { label: "Notifications", href: "/notifications", icon: Bell },
+        { label: "Tableau de bord", href: "/dashboard", icon: FileText },
+        { label: "File d'approbation", href: "/workspaces/approver", icon: Inbox },
+        { label: "Mes décisions", href: "/approvals", icon: FileText },
+        { label: "Suivi des SLA", href: "/reports", icon: BarChart3 },
+        { label: "Réquisitions", href: "/requisitions", icon: FileText },
+        { label: "Rapports", href: "/reports", icon: BarChart3 },
+        { label: "Paramètres", href: "/aide", icon: Settings },
       ],
     },
-    { title: "Support", items: [{ label: "User manual", href: "/aide", icon: HelpCircle }] },
   ],
   PROCUREMENT: [
     {
-      title: "Procurement Workspace",
+      title: "e-Procurement",
       items: [
-        { label: "Procurement Workspace", href: "/workspaces/procurement", icon: ClipboardList },
-        { label: "Process board", href: "/procurement", icon: ClipboardList },
-        { label: "Order tracking", href: "/purchase-orders", icon: ClipboardList },
-        { label: "Notifications", href: "/notifications", icon: Bell },
+        { label: "Tableau de bord", href: "/dashboard", icon: FileText },
+        { label: "Réquisitions approuvées", href: "/workspaces/procurement", icon: ClipboardList },
+        { label: "Plan de passation", href: "/procurement", icon: ClipboardList },
+        { label: "Demande de cotations / AO", href: "/procurement", icon: FileSignature },
+        { label: "Analyse des offres", href: "/procurement", icon: FileText },
+        { label: "Commandes (PO)", href: "/purchase-orders", icon: ClipboardList },
+        { label: "Suivi des marchés", href: "/purchase-orders", icon: BarChart3 },
+        { label: "Fournisseurs", href: "/suppliers", icon: Truck },
+        { label: "Rapports", href: "/reports", icon: BarChart3 },
+        { label: "Paramètres", href: "/aide", icon: Settings },
       ],
     },
-    { title: "Support", items: [{ label: "User manual", href: "/aide", icon: HelpCircle }] },
   ],
   SUPPLIER_MANAGER: [
     {
-      title: "Supplier Workspace",
+      title: "e-Procurement",
       items: [
-        { label: "Supplier Workspace", href: "/workspaces/supplier-manager", icon: Truck },
-        { label: "Supplier registry", href: "/suppliers", icon: Truck },
-        { label: "Linked orders", href: "/purchase-orders", icon: ClipboardList },
-        { label: "Notifications", href: "/notifications", icon: Bell },
+        { label: "Fournisseurs", href: "/workspaces/supplier-manager", icon: Truck },
+        { label: "Préqualification", href: "/suppliers", icon: ShieldCheck },
+        { label: "Documents", href: "/documents", icon: FolderArchive },
+        { label: "Évaluations", href: "/suppliers", icon: BarChart3 },
+        { label: "Commandes", href: "/purchase-orders", icon: ClipboardList },
+        { label: "Historique", href: "/audit", icon: FileText },
+        { label: "Paramètres", href: "/aide", icon: Settings },
       ],
     },
-    { title: "Support", items: [{ label: "User manual", href: "/aide", icon: HelpCircle }] },
   ],
   RECEIVER: [
     {
-      title: "Receiver Workspace",
+      title: "e-Procurement",
       items: [
-        { label: "Receiver Workspace", href: "/workspaces/receiver", icon: PackageCheck },
-        { label: "Pending receptions", href: "/receipts", icon: PackageCheck },
-        { label: "Purchase orders", href: "/purchase-orders", icon: ClipboardList },
-        { label: "Notifications", href: "/notifications", icon: Bell },
+        { label: "Fournisseur", href: "/suppliers", icon: Truck },
+        { label: "Réceptions en attente", href: "/workspaces/receiver", icon: PackageCheck },
+        { label: "Réceptions (GRN/SAN)", href: "/receipts", icon: PackageCheck },
+        { label: "Réceptions effectuées", href: "/receipts", icon: FileText },
+        { label: "Rapports", href: "/reports", icon: BarChart3 },
+        { label: "Paramètres", href: "/aide", icon: Settings },
       ],
     },
-    { title: "Support", items: [{ label: "User manual", href: "/aide", icon: HelpCircle }] },
   ],
   AUDITOR: [
     {
-      title: "Archive & Audit Workspace",
+      title: "e-Procurement",
       items: [
-        { label: "Archive & Audit", href: "/workspaces/archive-audit", icon: ShieldCheck },
-        { label: "Global documents", href: "/documents", icon: FolderArchive },
-        { label: "Immutable audit log", href: "/audit", icon: ShieldCheck },
-        { label: "Notifications", href: "/notifications", icon: Bell },
+        { label: "Recherche globale", href: "/workspaces/archive-audit", icon: ShieldCheck },
+        { label: "Réquisitions", href: "/requisitions", icon: FileText },
+        { label: "Fournisseurs", href: "/suppliers", icon: Truck },
+        { label: "Documents", href: "/documents", icon: FolderArchive },
+        { label: "Audit & Traçabilité", href: "/audit", icon: ShieldCheck },
+        { label: "Journaux d'accès", href: "/audit", icon: FileText },
+        { label: "Exports & Rapports", href: "/reports", icon: BarChart3 },
+        { label: "Paramètres", href: "/aide", icon: Settings },
       ],
     },
-    { title: "Support", items: [{ label: "User manual", href: "/aide", icon: HelpCircle }] },
   ],
   REPORTING: [
     {
-      title: "Reporting Workspace",
+      title: "e-Procurement",
       items: [
-        { label: "Reporting Workspace", href: "/workspaces/reporting", icon: BarChart3 },
-        { label: "Reports & exports", href: "/reports", icon: BarChart3 },
-        { label: "Notifications", href: "/notifications", icon: Bell },
+        { label: "Tableau de bord", href: "/workspaces/reporting", icon: BarChart3 },
+        { label: "KPIs", href: "/reports", icon: BarChart3 },
+        { label: "Réquisitions", href: "/requisitions", icon: FileText },
+        { label: "Fournisseurs", href: "/suppliers", icon: Truck },
+        { label: "Commandes (PO)", href: "/purchase-orders", icon: ClipboardList },
+        { label: "Délais & SLA", href: "/reports", icon: BarChart3 },
+        { label: "Rapports", href: "/reports", icon: FileText },
+        { label: "Exports", href: "/api/export/requisitions", icon: FolderArchive },
+        { label: "Paramètres", href: "/aide", icon: Settings },
       ],
     },
-    { title: "Support", items: [{ label: "User manual", href: "/aide", icon: HelpCircle }] },
   ],
   ADMIN: [
     {
-      title: "Admin Workspace",
+      title: "e-Procurement",
       items: [
-        { label: "Admin Workspace", href: "/workspaces/admin", icon: Settings },
-        { label: "Users", href: "/admin/users", icon: Users },
-        { label: "Departments", href: "/admin/departments", icon: Building2 },
-        { label: "Projects", href: "/admin/projects", icon: FolderArchive },
-        { label: "Budget lines", href: "/admin/budget-lines", icon: PiggyBank },
-        { label: "Workflow rules", href: "/admin/settings", icon: Settings },
-        { label: "Notifications", href: "/notifications", icon: Bell },
+        { label: "Utilisateurs", href: "/workspaces/admin", icon: Users },
+        { label: "Rôles & Droits", href: "/admin/users", icon: ShieldCheck },
+        { label: "Matrice permissions", href: "/admin/settings", icon: Settings },
+        { label: "Départements", href: "/admin/departments", icon: Building2 },
+        { label: "Projets", href: "/admin/projects", icon: FolderArchive },
+        { label: "Lignes budgétaires", href: "/admin/budget-lines", icon: PiggyBank },
+        { label: "Seuils d'approbation", href: "/admin/settings", icon: BarChart3 },
+        { label: "Règles de workflow", href: "/admin/settings", icon: ClipboardList },
+        { label: "Données de référence", href: "/admin/projects", icon: FileText },
+        { label: "Paramètres système", href: "/admin/settings", icon: Settings },
+        { label: "Journaux système", href: "/audit", icon: FileText },
       ],
     },
-    { title: "Support", items: [{ label: "User manual", href: "/aide", icon: HelpCircle }] },
   ],
 };
 
@@ -165,34 +188,25 @@ export function Sidebar({ role }: { role: Role }) {
   const WorkspaceIcon = WORKSPACE_ICON[role];
 
   return (
-    <aside className="hidden w-[278px] shrink-0 border-r border-white/10 bg-[#101811] text-white shadow-[18px_0_50px_-42px_rgba(15,23,42,0.8)] lg:flex lg:flex-col">
+    <aside className="hidden w-[226px] shrink-0 border-r border-[#08284d] bg-[#031f3d] text-white shadow-[18px_0_50px_-42px_rgba(15,23,42,0.8)] lg:flex lg:flex-col">
       <div className="relative overflow-hidden border-b border-white/10 px-5 py-5">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-wwf-500/15 blur-3xl" />
         <div className="relative flex items-center gap-3">
         <div
           className={cn(
-            "relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-soft ring-1 ring-white/20",
+            "relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br text-white shadow-soft ring-1 ring-white/20",
             ROLE_TINT[role],
           )}
         >
           <WorkspaceIcon className="h-5 w-5" strokeWidth={2.25} />
         </div>
         <div className="min-w-0">
-          <div className="text-base font-semibold leading-none tracking-tight text-white">
-            ProcureFlow
+          <div className="text-[13px] font-bold leading-none tracking-tight text-white">
+            e-Procurement
           </div>
           <div className="mt-1 truncate text-[11px] text-white/58">
-            {workspace.shortTitle} · workspace {workspace.number}
+            {workspace.shortTitle}
           </div>
         </div>
-        </div>
-        <div className="relative mt-4 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-wwf-100/75">
-            Separate route
-          </div>
-          <div className="mt-1 truncate text-xs text-white/78">
-            {workspace.path}
-          </div>
         </div>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin">
@@ -213,17 +227,17 @@ export function Sidebar({ role }: { role: Role }) {
                     <Link
                       href={item.href}
                       className={cn(
-                        "group flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] transition-colors",
+                        "group flex items-center gap-2.5 rounded-md px-3 py-2 text-[12px] transition-colors",
                         active
-                          ? "bg-white font-semibold text-wwf-900 shadow-soft ring-1 ring-white/70"
-                          : "text-white/70 hover:bg-white/[0.06] hover:text-white",
+                          ? "bg-[#0b62c8] font-semibold text-white shadow-soft"
+                          : "text-white/78 hover:bg-white/[0.08] hover:text-white",
                       )}
                     >
                       <Icon
                         className={cn(
                           "h-4 w-4 shrink-0",
                           active
-                            ? "text-wwf-700"
+                            ? "text-white"
                             : "text-white/38 group-hover:text-white/70",
                         )}
                       />
@@ -237,7 +251,6 @@ export function Sidebar({ role }: { role: Role }) {
         ))}
       </nav>
       <div className="border-t border-white/10 px-5 py-4">
-        <div className="gold-rule mb-3" />
         <div className="flex items-center gap-2 text-[10.5px] uppercase tracking-[0.14em] text-white/45">
           <Leaf className="h-3 w-3 text-wwf-300" /> WWF-RDC
         </div>

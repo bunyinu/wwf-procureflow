@@ -386,6 +386,7 @@ const requisitionActionsSource = readFileSync("src/app/(app)/requisitions/action
 const supplierActionsSource = readFileSync("src/app/(app)/suppliers/actions.ts", "utf8");
 const requisitionDetailSource = readFileSync("src/app/(app)/requisitions/[id]/page.tsx", "utf8");
 const documentsPageSource = readFileSync("src/app/(app)/documents/page.tsx", "utf8");
+const screenshotWorkspaceSource = readFileSync("src/app/(app)/workspaces/screenshot-components.tsx", "utf8");
 assert.equal(seedSource.includes("Role.MANAGER"), false, "seed must not create legacy manager role entries");
 assert.equal(seedSource.includes("Role.FINANCE"), false, "seed must not create legacy finance role entries");
 assert.equal(schemaSource.includes("model SupplierDocument"), true, "supplier due diligence documents must be persisted, not only described in UI");
@@ -416,5 +417,23 @@ assert.equal(
   true,
   "supplier manager must be able to review due diligence documents without entering the audit workspace",
 );
+assert.equal(
+  screenshotWorkspaceSource.includes("ScreenshotWorkspace"),
+  true,
+  "workspace screens must use the screenshot-aligned frame",
+);
+for (const [file, title] of [
+  ["requester", "1. DEMANDEUR / REQUESTER"],
+  ["approver", "2. APPROBATEUR HIÉRARCHIQUE / HIERARCHICAL APPROVER"],
+  ["procurement", "3. OFFICIER ACHATS / PROCUREMENT OFFICER"],
+  ["supplier-manager", "4. GESTIONNAIRE FOURNISSEURS / SUPPLIER MANAGER"],
+  ["receiver", "5. RÉCEPTIONNAIRE / RECEIVER"],
+  ["archive-audit", "6. ARCHIVE & AUDIT / DOCUMENTS & AUDIT OFFICER"],
+  ["reporting", "7. REPORTING / RESPONSABLE REPORTING"],
+  ["admin", "8. ADMIN / SYSTEM ADMINISTRATOR"],
+] as const) {
+  const source = readFileSync(`src/app/(app)/workspaces/${file}/page.tsx`, "utf8");
+  assert.equal(source.includes(title), true, `${file} must expose the requested screenshot title`);
+}
 
 console.log("workspace-contract-ok");

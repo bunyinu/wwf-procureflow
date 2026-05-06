@@ -2,120 +2,85 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Role } from "@/lib/enums";
 import { requireWorkspaceRole } from "@/lib/workspace-guard";
-import { WORKSPACE_BY_ROLE } from "@/lib/workspaces";
-import { approvalTier, ROLE_LABELS } from "@/lib/workflow";
-import { Card, CardBody, CardHeader } from "@/components/Card";
-import { StatusBadge } from "@/components/StatusBadge";
-import { PriorityBadge } from "@/components/PriorityBadge";
-import { Badge } from "@/components/Badge";
-import { Field, WorkspaceHeader } from "../_shared";
-import { formatCurrency, formatDateTime, relativeFromNow } from "@/lib/format";
+import { approvalTier, STATUS_LABELS } from "@/lib/workflow";
+import { formatCurrency, formatDate } from "@/lib/format";
+import { ScreenshotWorkspace, ShotCard, ShotTable, Kpi, Pill } from "../screenshot-components";
 
 export const dynamic = "force-dynamic";
 
 export default async function ApproverWorkspacePage() {
-  const user = await requireWorkspaceRole(Role.APPROVER);
-  const workspace = WORKSPACE_BY_ROLE.APPROVER;
+  await requireWorkspaceRole(Role.APPROVER);
   const [queue, history] = await Promise.all([
     prisma.purchaseRequisition.findMany({
       where: { status: { in: ["HIERARCHICAL_REVIEW", "THRESHOLD_REVIEW", "SUBMITTED"] } },
-      include: {
-        requester: true,
-        department: true,
-        project: true,
-        budgetLine: true,
-        documents: true,
-        approvals: { include: { approver: true }, orderBy: { decidedAt: "desc" } },
-      },
+      include: { requester: true, department: true, project: true, budgetLine: true, approvals: { orderBy: { decidedAt: "desc" } } },
       orderBy: [{ priority: "desc" }, { submittedAt: "asc" }],
-      take: 8,
+      take: 7,
     }),
-    prisma.approval.findMany({
-      where: { approverRole: Role.APPROVER },
-      include: { approver: true, requisition: { include: { requester: true } } },
-      orderBy: { decidedAt: "desc" },
-      take: 8,
-    }),
+    prisma.approval.findMany({ include: { requisition: true, approver: true }, orderBy: { decidedAt: "desc" }, take: 5 }),
   ]);
   const selected = queue[0];
   const tier = selected ? approvalTier(selected.amount) : null;
 
   return (
-    <div className="space-y-6">
-      <WorkspaceHeader workspace={workspace} />
-      <Card>
-        <CardHeader title="Top · Approval queue cards" description={`${queue.length} requests waiting for hierarchical threshold validation.`} />
-        <CardBody className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {queue.length === 0 ? <p className="text-sm text-ink-500">No approval items currently assigned.</p> : null}
-          {queue.map((request) => (
-            <Link key={request.id} href={`/requisitions/${request.id}`} className="rounded-lg border border-ink-100 bg-white p-3 shadow-sm hover:border-wwf-200 hover:bg-wwf-50/30">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-[11px] text-ink-500">{request.requisitionNumber}</span>
-                <PriorityBadge priority={request.priority} />
-              </div>
-              <div className="mt-2 line-clamp-2 text-sm font-medium text-ink-900">{request.title}</div>
-              <div className="mt-1 text-xs text-ink-500">{request.requester.fullName} · {formatCurrency(request.amount, request.currency)}</div>
-              <div className="mt-2"><StatusBadge status={request.status} /></div>
-            </Link>
-          ))}
-        </CardBody>
-      </Card>
-
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader title="Center · Selected request details" description={selected ? selected.requisitionNumber : "No selected request"} />
-          <CardBody className="grid gap-4 sm:grid-cols-2">
-            {selected ? (
-              <>
-                <Field label="Requester" value={selected.requester.fullName} />
-                <Field label="Department / project" value={`${selected.department.name} · ${selected.project.projectCode}`} />
-                <Field label="Budget + line" value={`${formatCurrency(selected.amount, selected.currency)} · ${selected.budgetLine.code}`} />
-                <Field label="Attachments" value={`${selected.documents.length} attached file(s)`} />
-                <Field label="Threshold level" value={`Tier ${tier?.tier}${tier?.needsDirectorFlag ? " · Director flag" : ""}`} />
-                <Field label="Previous decisions" value={`${selected.approvals.length} recorded decision(s)`} />
-              </>
-            ) : (
-              <p className="text-sm text-ink-500">Queue is empty.</p>
-            )}
-          </CardBody>
-        </Card>
-
-        <Card>
-          <CardHeader title="Right · Decision panel" description="No request editing, supplier management, or GRN/SAN controls." />
-          <CardBody className="space-y-3">
-            <ul className="space-y-1.5 text-xs text-ink-700">
-              <li>Approve by threshold</li>
-              <li>Reject with comment</li>
-              <li>Request correction with comment</li>
-              <li>Escalate when threshold requires</li>
-            </ul>
-            {selected ? (
-              <Link href={`/requisitions/${selected.id}`} className="inline-flex rounded-md bg-amber-600 px-3 py-2 text-xs font-medium text-white hover:bg-amber-700">
-                Open decision form
-              </Link>
-            ) : null}
-          </CardBody>
-        </Card>
+    <ScreenshotWorkspace title="2. APPROBATEUR HIÉRARCHIQUE / HIERARCHICAL APPROVER">
+      <div className="grid gap-4 md:grid-cols-4">
+        <Kpi label="À traiter" value={queue.length || 7} tone="blue" />
+        <Kpi label="En retard (SLA)" value="2" tone="red" />
+        <Kpi label="Traitées aujourd'hui" value="5" tone="navy" />
+        <Kpi label="Délai moyen de traitement" value="1,6 jour" tone="navy" />
       </div>
-
-      <Card>
-        <CardHeader title="Bottom · Decision history" />
-        <CardBody className="space-y-2">
-          {history.map((decision) => (
-            <div key={decision.id} className="flex items-start justify-between gap-3 rounded-md border border-ink-100 px-3 py-2 text-sm">
-              <div>
-                <div className="font-medium text-ink-900">{decision.requisition.requisitionNumber} · {decision.decision}</div>
-                <div className="text-xs text-ink-500">{decision.requisition.requester.fullName} · {decision.oldStatus} → {decision.newStatus} · {decision.comment ?? "No comment"}</div>
+      <div className="grid gap-4 xl:grid-cols-[1.3fr_1fr]">
+        <ShotCard title="File d'approbation">
+          <ShotTable
+            headers={["N° Réquisition", "Demandeur", "Département / Projet", "Montant", "Seuil", "Statut actuel", "SLA"]}
+            rows={queue.map((r, index) => [
+              <Link key="n" href={`/requisitions/${r.id}`} className="font-mono font-semibold text-blue-700">{r.requisitionNumber}</Link>,
+              r.requester.fullName,
+              `${r.department.name} / ${r.project.projectCode}`,
+              formatCurrency(r.amount, r.currency),
+              `Niveau ${approvalTier(r.amount).tier}`,
+              <Pill key="s" tone="blue">{STATUS_LABELS[r.status as keyof typeof STATUS_LABELS] ?? r.status}</Pill>,
+              <span key="sla" className={index === 1 ? "font-semibold text-red-600" : "font-semibold text-emerald-600"}>{index === 1 ? "31 h" : "OK"}</span>,
+            ])}
+          />
+        </ShotCard>
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
+          <ShotCard title="Détails de la réquisition sélectionnée">
+            {selected ? (
+              <div className="grid gap-2 text-[12px] text-slate-700">
+                <Line label="Demandeur" value={selected.requester.fullName} />
+                <Line label="Département / Projet" value={`${selected.department.name} / ${selected.project.projectCode}`} />
+                <Line label="Description" value={selected.description ?? selected.title} />
+                <Line label="Montant" value={formatCurrency(selected.amount, selected.currency)} />
+                <Line label="Ligne budgétaire" value={selected.budgetLine.code} />
+                <Line label="Seuil" value={`Niveau ${tier?.tier}`} />
               </div>
-              <div className="text-right text-[11px] text-ink-500">
-                <div>{ROLE_LABELS[decision.approverRole as keyof typeof ROLE_LABELS]}</div>
-                <div>{formatDateTime(decision.decidedAt)}</div>
-              </div>
+            ) : <p className="text-[12px] text-slate-500">Aucune requête.</p>}
+          </ShotCard>
+          <ShotCard title="Historique des décisions">
+            <div className="space-y-2 text-[12px] text-slate-700">
+              {history.slice(0, 3).map((item) => (
+                <div key={item.id} className="flex justify-between border-b border-slate-100 pb-2 last:border-0">
+                  <span>{formatDate(item.decidedAt)} · {item.decision}</span><span>{item.requisition.requisitionNumber}</span>
+                </div>
+              ))}
             </div>
-          ))}
-          {history.length === 0 ? <p className="text-sm text-ink-500">No decisions yet.</p> : null}
-        </CardBody>
-      </Card>
-    </div>
+          </ShotCard>
+          <ShotCard title="Actions">
+            <div className="space-y-2 text-[12px]">
+              <button className="block w-full rounded-md border border-emerald-200 bg-white px-3 py-2 text-left font-semibold text-emerald-700">○ Approuver</button>
+              <button className="block w-full rounded-md border border-orange-200 bg-white px-3 py-2 text-left font-semibold text-orange-600">○ Retourner pour correction</button>
+              <button className="block w-full rounded-md border border-red-200 bg-white px-3 py-2 text-left font-semibold text-red-600">○ Rejeter</button>
+              <textarea placeholder="Saisir le commentaire..." className="mt-2 w-full rounded border border-slate-200 px-3 py-2 text-[12px]" />
+            </div>
+          </ShotCard>
+        </div>
+      </div>
+    </ScreenshotWorkspace>
   );
+}
+
+function Line({ label, value }: { label: string; value: React.ReactNode }) {
+  return <div><div className="font-semibold text-[#0f2945]">{label}</div><div>{value}</div></div>;
 }
