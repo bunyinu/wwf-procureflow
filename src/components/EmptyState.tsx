@@ -13,14 +13,12 @@ export function EmptyState({
   icon?: LucideIcon;
 }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink-200/80 bg-white/58 px-6 py-12 text-center shadow-inner">
-      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-wwf-50 text-wwf-700 ring-1 ring-wwf-100">
+    <div className="flex flex-col items-center gap-3 rounded-[4px] border border-dashed border-[#cfd9e8] bg-white px-6 py-10 text-center">
+      <span className="flex h-10 w-10 items-center justify-center rounded-[4px] bg-blue-50 text-blue-700 ring-1 ring-blue-100">
         <Icon className="h-5 w-5" />
       </span>
-      <div className="text-sm font-semibold text-ink-900">{title}</div>
-      {description ? (
-        <p className="max-w-md text-xs leading-5 text-ink-500">{description}</p>
-      ) : null}
+      <div className="text-sm font-bold text-[#0f2945]">{title}</div>
+      {description ? <p className="max-w-md text-xs leading-5 text-slate-500">{description}</p> : null}
       {action}
     </div>
   );

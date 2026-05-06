@@ -12,7 +12,6 @@ import {
   FolderArchive,
   HelpCircle,
   Inbox,
-  Leaf,
   LucideIcon,
   PackageCheck,
   PiggyBank,
@@ -23,7 +22,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { Role } from "@/lib/enums";
-import { WORKSPACE_BY_ROLE } from "@/lib/workspaces";
 
 type NavItem = {
   label: string;
@@ -32,17 +30,6 @@ type NavItem = {
 };
 
 type Section = { title: string; items: NavItem[] };
-
-const WORKSPACE_ICON: Record<Role, LucideIcon> = {
-  REQUESTER: FileSignature,
-  APPROVER: Inbox,
-  PROCUREMENT: ClipboardList,
-  SUPPLIER_MANAGER: Truck,
-  RECEIVER: PackageCheck,
-  AUDITOR: ShieldCheck,
-  REPORTING: BarChart3,
-  ADMIN: Settings,
-};
 
 // Strict per-role workspace navigation. This is not a dashboard role filter:
 // every role enters its own /workspaces/* route and only sees the modules it owns.
@@ -170,43 +157,21 @@ const NAV_BY_ROLE: Record<Role, Section[]> = {
   ],
 };
 
-const ROLE_TINT: Record<Role, string> = {
-  REQUESTER: "from-sky-600 to-sky-800",
-  APPROVER: "from-amber-600 to-amber-800",
-  PROCUREMENT: "from-wwf-600 to-wwf-800",
-  SUPPLIER_MANAGER: "from-rose-600 to-rose-800",
-  RECEIVER: "from-teal-600 to-teal-800",
-  AUDITOR: "from-slate-600 to-slate-800",
-  REPORTING: "from-indigo-600 to-indigo-800",
-  ADMIN: "from-wwf-600 to-wwf-800",
-};
+
 
 export function Sidebar({ role }: { role: Role }) {
   const pathname = usePathname();
   const sections = NAV_BY_ROLE[role] ?? NAV_BY_ROLE.REQUESTER;
-  const workspace = WORKSPACE_BY_ROLE[role];
-  const WorkspaceIcon = WORKSPACE_ICON[role];
-
   return (
     <aside className="hidden w-[226px] shrink-0 border-r border-[#08284d] bg-[#031f3d] text-white shadow-[18px_0_50px_-42px_rgba(15,23,42,0.8)] lg:flex lg:flex-col">
-      <div className="relative overflow-hidden border-b border-white/10 px-5 py-5">
-        <div className="relative flex items-center gap-3">
-        <div
-          className={cn(
-            "relative flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br text-white shadow-soft ring-1 ring-white/20",
-            ROLE_TINT[role],
-          )}
-        >
-          <WorkspaceIcon className="h-5 w-5" strokeWidth={2.25} />
-        </div>
-        <div className="min-w-0">
+      <div className="border-b border-white/10 px-5 py-5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#f0c94b]/45 bg-[#062c55] text-[#f0c94b]">
+            <ShieldCheck className="h-5 w-5" strokeWidth={2.25} />
+          </div>
           <div className="text-[13px] font-bold leading-none tracking-tight text-white">
             e-Procurement
           </div>
-          <div className="mt-1 truncate text-[11px] text-white/58">
-            {workspace.shortTitle}
-          </div>
-        </div>
         </div>
       </div>
       <nav className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin">
@@ -250,11 +215,6 @@ export function Sidebar({ role }: { role: Role }) {
           </div>
         ))}
       </nav>
-      <div className="border-t border-white/10 px-5 py-4">
-        <div className="flex items-center gap-2 text-[10.5px] uppercase tracking-[0.14em] text-white/45">
-          <Leaf className="h-3 w-3 text-wwf-300" /> WWF-RDC
-        </div>
-      </div>
     </aside>
   );
 }

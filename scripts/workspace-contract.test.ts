@@ -387,6 +387,28 @@ const supplierActionsSource = readFileSync("src/app/(app)/suppliers/actions.ts",
 const requisitionDetailSource = readFileSync("src/app/(app)/requisitions/[id]/page.tsx", "utf8");
 const documentsPageSource = readFileSync("src/app/(app)/documents/page.tsx", "utf8");
 const screenshotWorkspaceSource = readFileSync("src/app/(app)/workspaces/screenshot-components.tsx", "utf8");
+const appLayoutSource = readFileSync("src/app/(app)/layout.tsx", "utf8");
+const globalStylesSource = readFileSync("src/app/globals.css", "utf8");
+const loginSource = readFileSync("src/app/login/page.tsx", "utf8");
+const demoSource = readFileSync("src/app/demo/page.tsx", "utf8");
+const cardSource = readFileSync("src/components/Card.tsx", "utf8");
+const statSource = readFileSync("src/components/Stat.tsx", "utf8");
+const workspaceSharedSource = readFileSync("src/app/(app)/workspaces/_shared.tsx", "utf8");
+for (const [name, source] of [
+  ["app layout", appLayoutSource],
+  ["global styles", globalStylesSource],
+  ["login page", loginSource],
+  ["demo page", demoSource],
+  ["card component", cardSource],
+  ["stat component", statSource],
+  ["workspace shared component", workspaceSharedSource],
+] as const) {
+  assert.equal(source.includes("executive-panel"), false, `${name} must not use the rejected executive visual system`);
+  assert.equal(source.includes("app-gradient-shell"), false, `${name} must not use the rejected gradient shell`);
+  assert.equal(source.includes("brand-rule"), false, `${name} must not use the rejected mixed brand rule`);
+}
+assert.equal(globalStylesSource.includes("radial-gradient"), false, "global app background must be the flat screenshot background");
+
 assert.equal(seedSource.includes("Role.MANAGER"), false, "seed must not create legacy manager role entries");
 assert.equal(seedSource.includes("Role.FINANCE"), false, "seed must not create legacy finance role entries");
 assert.equal(schemaSource.includes("model SupplierDocument"), true, "supplier due diligence documents must be persisted, not only described in UI");

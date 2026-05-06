@@ -9,11 +9,11 @@ export function ScreenshotWorkspace({
   children: ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-md border border-[#0b315c]/20 bg-[#f5f8fb] shadow-[0_18px_48px_-38px_rgba(15,23,42,0.65)]">
-      <div className="bg-[#062c55] px-5 py-2 text-center text-sm font-bold uppercase tracking-wide text-white">
+    <section className="overflow-hidden rounded-[4px] border border-[#d8e2ef] bg-[#f5f8fb] shadow-[0_1px_2px_rgba(15,23,42,0.06)]">
+      <div className="bg-[#062c55] px-4 py-1.5 text-center text-[13px] font-bold uppercase tracking-wide text-white">
         {title}
       </div>
-      <div className="space-y-4 p-4">{children}</div>
+      <div className="space-y-3 p-2.5 sm:p-3">{children}</div>
     </section>
   );
 }
@@ -30,14 +30,14 @@ export function ShotCard({
   action?: ReactNode;
 }) {
   return (
-    <div className={cn("rounded-md border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]", className)}>
+    <div className={cn("overflow-hidden rounded-[4px] border border-[#dbe3ef] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]", className)}>
       {title ? (
-        <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-4 py-2.5">
-          <h2 className="text-[13px] font-bold text-[#0f2945]">{title}</h2>
+        <div className="flex items-center justify-between gap-3 border-b border-[#eef2f7] px-3 py-2">
+          <h2 className="text-[13px] font-bold leading-none text-[#0f2945]">{title}</h2>
           {action}
         </div>
       ) : null}
-      <div className={cn("p-4", !title && "pt-4")}>{children}</div>
+      <div className={cn("p-3", !title && "pt-3")}>{children}</div>
     </div>
   );
 }
@@ -61,11 +61,11 @@ export function Kpi({
     blue: "text-blue-600",
   };
   return (
-    <div className="rounded-md border border-slate-200 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+    <div className="rounded-[4px] border border-[#dbe3ef] bg-white px-3 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
       <div className="flex items-center gap-1 text-[11px] font-semibold text-slate-600">
         {label} <span className="text-slate-400">•</span>
       </div>
-      <div className={cn("mt-2 text-2xl font-bold leading-none", tones[tone])}>{value}</div>
+      <div className={cn("mt-2 text-[28px] font-bold leading-none", tones[tone])}>{value}</div>
       {note ? <div className="mt-1 text-[11px] text-slate-500">{note}</div> : null}
     </div>
   );
@@ -86,7 +86,7 @@ export function Pill({
     gray: "bg-slate-100 text-slate-700 ring-slate-200",
   };
   return (
-    <span className={cn("inline-flex rounded px-2 py-0.5 text-[11px] font-semibold ring-1", tones[tone])}>
+    <span className={cn("inline-flex rounded-[4px] px-2 py-0.5 text-[11px] font-semibold leading-none ring-1", tones[tone])}>
       {children}
     </span>
   );
@@ -105,9 +105,9 @@ export function ShotTable({
     <div className="overflow-x-auto">
       <table className="w-full text-left text-[12px]">
         <thead>
-          <tr className="border-b border-slate-100 bg-slate-50 text-[10px] uppercase tracking-wide text-slate-500">
+          <tr className="border-b border-[#eef2f7] bg-[#f8fafc] text-[10px] uppercase tracking-wide text-slate-500">
             {headers.map((header) => (
-              <th key={header} className={cn("font-bold", compact ? "px-2 py-2" : "px-3 py-2.5")}>
+              <th key={header} className={cn("font-bold", compact ? "px-2 py-1.5" : "px-3 py-2")}>
                 {header}
               </th>
             ))}
@@ -115,9 +115,9 @@ export function ShotTable({
         </thead>
         <tbody>
           {rows.map((row, index) => (
-            <tr key={index} className="border-b border-slate-50 last:border-none hover:bg-slate-50/70">
+            <tr key={index} className="border-b border-[#f1f5f9] last:border-none hover:bg-[#f8fafc]">
               {row.map((cell, cellIndex) => (
-                <td key={cellIndex} className={cn("align-top text-slate-700", compact ? "px-2 py-2" : "px-3 py-2.5")}>
+                <td key={cellIndex} className={cn("align-top text-slate-700", compact ? "px-2 py-1.5" : "px-3 py-2")}>
                   {cell}
                 </td>
               ))}
@@ -133,7 +133,7 @@ export function FieldBox({ label, value }: { label: string; value: ReactNode }) 
   return (
     <div>
       <label className="text-[11px] font-semibold text-[#0f2945]">{label}</label>
-      <div className="mt-1 rounded border border-slate-200 bg-white px-3 py-2 text-[12px] text-slate-700">
+      <div className="mt-1 rounded-[4px] border border-[#dbe3ef] bg-white px-3 py-2 text-[12px] text-slate-700">
         {value}
       </div>
     </div>
@@ -155,7 +155,7 @@ export function StatusStep({
     <div className="flex gap-2">
       <div
         className={cn(
-          "mt-0.5 flex h-5 w-5 items-center justify-center rounded-full border text-[10px]",
+          "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px]",
           done
             ? "border-emerald-500 bg-emerald-500 text-white"
             : active

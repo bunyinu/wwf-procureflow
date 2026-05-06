@@ -11,7 +11,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "executive-panel lift overflow-hidden rounded-2xl",
+        "overflow-hidden rounded-[4px] border border-[#dbe3ef] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]",
         className,
       )}
     >
@@ -30,14 +30,13 @@ export function CardHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="relative flex items-start justify-between gap-4 border-b border-ink-100/80 px-5 py-4">
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-wwf-600/45 via-gold-400/45 to-transparent" />
+    <div className="flex items-start justify-between gap-4 border-b border-[#eef2f7] px-4 py-3">
       <div className="min-w-0">
-        <h2 className="text-[14px] font-semibold tracking-tight text-ink-950">
+        <h2 className="text-[13px] font-bold tracking-normal text-[#0f2945]">
           {title}
         </h2>
         {description ? (
-          <p className="mt-1 max-w-3xl text-xs leading-5 text-ink-500">{description}</p>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-500">{description}</p>
         ) : null}
       </div>
       {action}
@@ -52,5 +51,5 @@ export function CardBody({
   children: ReactNode;
   className?: string;
 }) {
-  return <div className={cn("px-5 py-4", className)}>{children}</div>;
+  return <div className={cn("px-4 py-3", className)}>{children}</div>;
 }

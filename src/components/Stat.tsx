@@ -19,64 +19,45 @@ export function Stat({
 }) {
   const toneClass =
     tone === "warn"
-      ? "text-amber-700"
+      ? "text-orange-600"
       : tone === "good"
-        ? "text-wwf-700"
+        ? "text-emerald-600"
         : tone === "muted"
-          ? "text-ink-500"
+          ? "text-slate-500"
           : tone === "brand"
-            ? "text-wwf-800"
-            : "text-ink-900";
+            ? "text-blue-700"
+            : "text-[#0f2945]";
   const iconBg =
     tone === "warn"
-      ? "bg-amber-50 text-amber-600 ring-amber-100"
+      ? "bg-orange-50 text-orange-600 ring-orange-100"
       : tone === "good" || tone === "brand"
-        ? "bg-wwf-50 text-wwf-700 ring-wwf-100"
-        : "bg-ink-50 text-ink-500 ring-ink-100";
+        ? "bg-blue-50 text-blue-700 ring-blue-100"
+        : "bg-slate-50 text-slate-500 ring-slate-100";
 
   return (
-    <div className="executive-panel lift group relative overflow-hidden rounded-2xl p-5">
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-1"
-        style={{
-          background:
-            "linear-gradient(90deg, rgba(46,109,60,0.65), rgba(180,133,51,0.45), transparent)",
-        }}
-      />
+    <div className="rounded-[4px] border border-[#dbe3ef] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
       <div className="flex items-start justify-between gap-3">
-        <span className="text-[10.5px] font-medium uppercase tracking-[0.12em] text-ink-500">
-          {label}
+        <span className="text-[11px] font-semibold text-slate-600">
+          {label} <span className="text-slate-400">•</span>
         </span>
         {Icon ? (
-          <span
-            className={cn(
-              "flex h-9 w-9 items-center justify-center rounded-xl ring-1",
-              iconBg,
-            )}
-          >
+          <span className={cn("flex h-8 w-8 items-center justify-center rounded-[4px] ring-1", iconBg)}>
             <Icon className="h-4 w-4" />
           </span>
         ) : null}
       </div>
-      <div
-        className={cn(
-          "mt-3 text-[30px] font-semibold leading-none tracking-tight",
-          toneClass,
-        )}
-      >
-        {value}
-      </div>
-      <div className="mt-2 flex items-center gap-2 text-xs">
-        {hint ? <span className="text-ink-500">{hint}</span> : null}
+      <div className={cn("mt-2 text-[28px] font-bold leading-none", toneClass)}>{value}</div>
+      <div className="mt-1 flex items-center gap-2 text-[11px]">
+        {hint ? <span className="text-slate-500">{hint}</span> : null}
         {trend ? (
           <span
             className={cn(
-              "ml-auto inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+              "ml-auto inline-flex items-center gap-0.5 rounded-[4px] px-1.5 py-0.5 text-[10px] font-semibold",
               trend.direction === "up"
                 ? "bg-emerald-50 text-emerald-700"
                 : trend.direction === "down"
-                  ? "bg-rose-50 text-rose-700"
-                  : "bg-ink-100 text-ink-600",
+                  ? "bg-red-50 text-red-700"
+                  : "bg-slate-100 text-slate-600",
             )}
           >
             {trend.direction === "up" ? "↑" : trend.direction === "down" ? "↓" : "→"}

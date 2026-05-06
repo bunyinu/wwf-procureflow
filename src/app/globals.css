@@ -4,42 +4,35 @@
 
 :root {
   color-scheme: light;
-  --surface: rgba(255, 255, 255, 0.86);
+  --surface: #ffffff;
   --surface-strong: #ffffff;
-  --line: rgba(31, 35, 51, 0.1);
-  --field: rgba(255, 255, 255, 0.92);
-  --focus: rgba(46, 109, 60, 0.22);
-  --premium-rule: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(180, 133, 51, 0.4) 20%,
-    rgba(180, 133, 51, 0.4) 80%,
-    transparent 100%
-  );
+  --line: #dbe3ef;
+  --field: #ffffff;
+  --focus: rgba(37, 99, 235, 0.18);
 }
 
 html,
 body {
   min-height: 100%;
-  background:
-    radial-gradient(circle at 12% 4%, rgba(63, 139, 79, 0.13), transparent 28rem),
-    radial-gradient(circle at 82% 0%, rgba(180, 133, 51, 0.1), transparent 26rem),
-    linear-gradient(180deg, #f8faf7 0%, #f3f6f1 46%, #eef2ed 100%);
-  color: #1f2333;
+  background: #f5f8fb;
+  color: #0f2945;
   font-feature-settings: "ss01", "cv11";
   text-rendering: optimizeLegibility;
 }
 
-h1, h2, h3, h4 {
-  letter-spacing: -0.01em;
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: 0;
 }
 
 ::selection {
-  background: rgba(46, 109, 60, 0.18);
+  background: rgba(37, 99, 235, 0.16);
 }
 
 :focus-visible {
-  outline: 2px solid rgba(46, 109, 60, 0.58);
+  outline: 2px solid #2563eb;
   outline-offset: 2px;
 }
 
@@ -47,59 +40,48 @@ h1, h2, h3, h4 {
   font-family: var(--font-serif);
 }
 
-/* Subtle entry animation */
 .fade-in {
-  animation: fade-in 220ms ease-out both;
-}
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(2px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+  animation: none;
 }
 
-/* Premium scrollbar */
 .scrollbar-thin::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
+
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #cbd2dc;
+  background: #93a4ba;
   border-radius: 4px;
 }
+
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: #a9b2c0;
+  background: #7489a3;
 }
 
-/* Card lift hover */
-.lift {
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
-}
+.lift,
 .lift:hover {
-  transform: translateY(-1px);
+  transform: none;
+  transition: none;
 }
 
 @layer base {
   input,
   select,
   textarea {
-    color: #1f2333;
+    color: #0f2945;
+    background: #ffffff;
   }
 
   input::placeholder,
   textarea::placeholder {
-    color: #8e98ac;
+    color: #8b98aa;
   }
 
   input:focus,
   select:focus,
   textarea:focus {
-    border-color: rgba(46, 109, 60, 0.7) !important;
-    box-shadow: 0 0 0 4px var(--focus) !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px var(--focus) !important;
     outline: none !important;
   }
 
@@ -109,61 +91,30 @@ h1, h2, h3, h4 {
   }
 
   th {
-    background: rgba(247, 248, 250, 0.82);
+    background: #f8fafc;
   }
 }
 
-@layer components {
-  .app-gradient-shell {
-    background:
-      linear-gradient(90deg, rgba(255,255,255,0.58), rgba(255,255,255,0.2)),
-      radial-gradient(circle at top left, rgba(46,109,60,0.12), transparent 30rem),
-      radial-gradient(circle at 90% 0%, rgba(180,133,51,0.09), transparent 28rem);
-  }
-
-  .executive-panel {
-    border: 1px solid rgba(31, 35, 51, 0.1);
-    background:
-      linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,255,255,0.84)),
-      radial-gradient(circle at top right, rgba(46,109,60,0.08), transparent 22rem);
-    box-shadow:
-      0 1px 0 rgba(255,255,255,0.85) inset,
-      0 18px 42px -30px rgba(15,23,42,0.45),
-      0 1px 2px rgba(15,23,42,0.04);
-    backdrop-filter: blur(16px);
-  }
-
-  .brand-rule {
-    height: 1px;
-    background: linear-gradient(90deg, rgba(46,109,60,0.55), rgba(180,133,51,0.42), transparent);
-  }
-}
-
-/* Premium gold rule */
-.gold-rule {
-  height: 1px;
-  background: var(--premium-rule);
-}
-
-/* Print baseline for premium PDFs */
+/* Print baseline for PDFs */
 @media print {
   @page {
     size: A4;
     margin: 14mm 14mm 18mm 14mm;
   }
+
   body {
     background: white !important;
   }
+
   .no-print {
     display: none !important;
   }
+
   .pdf-page {
     box-shadow: none !important;
     border: none !important;
   }
-  /* Force browser to keep background colors / gradients in the PDF.
-     Without this, Chrome/Safari/Firefox strip backgrounds by default and
-     the PDF looks unstyled compared to the on-screen preview. */
+
   .pdf-page,
   .pdf-page * {
     -webkit-print-color-adjust: exact !important;
@@ -172,7 +123,6 @@ h1, h2, h3, h4 {
   }
 }
 
-/* Apply on screen too so preview matches PDF exactly */
 .pdf-page,
 .pdf-page * {
   -webkit-print-color-adjust: exact;
