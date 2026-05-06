@@ -12,6 +12,13 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { CongoMotif } from "@/components/CongoMotif";
+import {
+  WWF_EVALUATION_CRITERIA,
+  WWF_EXPECTED_DELIVERABLES,
+  WWF_FUNCTIONAL_REQUIREMENTS,
+  WWF_TDR,
+  WWF_TOTAL_SCORE,
+} from "@/lib/tdr";
 
 const cards: Array<{
   title: string;
@@ -322,6 +329,20 @@ export default function ProofPage() {
           40001336 / 403725).
         </p>
 
+        <div className="mt-6 grid gap-3 md:grid-cols-4">
+          {[
+            ["Objet", WWF_TDR.title],
+            ["Projets", WWF_TDR.projects.join(" / ")],
+            ["Dépôt", WWF_TDR.submissionDeadline],
+            ["Score", `${WWF_TOTAL_SCORE} points (${WWF_EVALUATION_CRITERIA.filter((c) => c.group === "Technique").reduce((sum, c) => sum + c.points, 0)} technique / ${WWF_EVALUATION_CRITERIA.filter((c) => c.group === "Financière").reduce((sum, c) => sum + c.points, 0)} financier)`],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-lg border border-ink-100 bg-white p-3 shadow-sm">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-ink-400">{label}</div>
+              <div className="mt-1 text-xs font-medium text-ink-800">{value}</div>
+            </div>
+          ))}
+        </div>
+
         <div className="mt-6 inline-flex items-center gap-3 rounded-lg border border-wwf-200 bg-white px-4 py-2 text-sm shadow-sm">
           <span className="font-semibold text-ink-900">
             {conformance.length} exigences TDR couvertes
@@ -365,6 +386,64 @@ export default function ProofPage() {
               </article>
             );
           })}
+        </div>
+
+        <div className="mt-10 rounded-xl border border-ink-200 bg-white p-5 shadow-card">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">
+            TDR §4 · Exigences fonctionnelles exactes
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {WWF_FUNCTIONAL_REQUIREMENTS.map((section) => (
+              <div key={section.section} className="rounded-lg border border-ink-100 p-3">
+                <div className="text-xs font-semibold text-wwf-700">
+                  {section.section} · {section.title}
+                </div>
+                <ul className="mt-2 space-y-1 text-[11px] text-ink-600">
+                  {section.requirements.map((requirement) => (
+                    <li key={requirement} className="flex gap-1.5">
+                      <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0 text-wwf-600" />
+                      {requirement}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-10 grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="rounded-xl border border-ink-200 bg-white p-5 shadow-card">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">
+              Grille d&apos;évaluation · objectif {WWF_TOTAL_SCORE}/100
+            </div>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-sm">
+                <tbody>
+                  {WWF_EVALUATION_CRITERIA.map((criterion) => (
+                    <tr key={criterion.label} className="border-b border-ink-50 last:border-none">
+                      <td className="py-2 pr-3 text-xs text-ink-700">{criterion.label}</td>
+                      <td className="w-16 py-2 text-right text-xs font-semibold text-ink-900">
+                        {criterion.points}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div className="rounded-xl border border-ink-200 bg-white p-5 shadow-card">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-500">
+              Livrables §6
+            </div>
+            <ul className="mt-4 space-y-2 text-xs text-ink-700">
+              {WWF_EXPECTED_DELIVERABLES.map((deliverable) => (
+                <li key={deliverable} className="flex gap-2">
+                  <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-wwf-600" />
+                  {deliverable}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         <div className="mt-12 rounded-xl border border-ink-200 bg-white p-6 shadow-card">

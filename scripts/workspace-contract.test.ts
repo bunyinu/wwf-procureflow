@@ -10,6 +10,15 @@ import {
 import { optionalFormString } from "../src/lib/form";
 import { can } from "../src/lib/permissions";
 import {
+  WWF_EVALUATION_CRITERIA,
+  WWF_EXPECTED_DELIVERABLES,
+  WWF_FUNCTIONAL_REQUIREMENTS,
+  WWF_TDR,
+  WWF_TECHNICAL_SCORE,
+  WWF_FINANCIAL_SCORE,
+  WWF_TOTAL_SCORE,
+} from "../src/lib/tdr";
+import {
   PROCUREMENT_INTERCONNECTION,
   PROCUREMENT_METHODS_FROM_PDF,
   WORKSPACE_BY_ROLE,
@@ -47,6 +56,27 @@ assert.deepEqual(
 );
 assert.equal(Object.values(Role).includes("MANAGER" as never), false, "MANAGER must not exist as a role");
 assert.equal(Object.values(Role).includes("FINANCE" as never), false, "FINANCE must not exist as a role");
+
+assert.equal(WWF_TDR.submissionDeadline, "21 mai 2026 à 17h00, heure de Kinshasa", "TDR submission deadline must match the PDF");
+assert.deepEqual(WWF_TDR.projects, ["OD-40001336", "OD-403725"], "TDR project codes must match the PDF");
+assert.equal(WWF_TDR.submissionEmail, "procurement@wwfdrc.org", "submission email must match the PDF");
+assert.equal(WWF_FUNCTIONAL_REQUIREMENTS.length, 9, "TDR §4 must be represented from 4.1 to 4.9");
+assert.equal(WWF_EXPECTED_DELIVERABLES.length, 7, "TDR §6 requires seven deliverables");
+assert.equal(
+  WWF_EVALUATION_CRITERIA.reduce((sum, item) => sum + item.points, 0),
+  WWF_TOTAL_SCORE,
+  "TDR evaluation criteria must total 100 points",
+);
+assert.equal(
+  WWF_EVALUATION_CRITERIA.filter((item) => item.group === "Technique").reduce((sum, item) => sum + item.points, 0),
+  WWF_TECHNICAL_SCORE,
+  "technical score must total 80 points",
+);
+assert.equal(
+  WWF_EVALUATION_CRITERIA.filter((item) => item.group === "Financière").reduce((sum, item) => sum + item.points, 0),
+  WWF_FINANCIAL_SCORE,
+  "financial score must total 20 points",
+);
 
 assert.equal(WORKSPACES.length, 8, "must expose exactly 8 workspaces");
 assert.deepEqual(
