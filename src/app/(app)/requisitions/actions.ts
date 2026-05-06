@@ -388,6 +388,8 @@ export async function decideAction(formData: FormData) {
   revalidatePath(`/requisitions/${parsed.id}`);
   revalidatePath("/requisitions");
   revalidatePath("/approvals");
+  revalidatePath("/workspaces/approver");
+  revalidatePath("/workspaces/procurement");
   revalidatePath("/workspaces/requester");
   redirect(`/requisitions/${parsed.id}`);
 }

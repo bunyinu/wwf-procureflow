@@ -25,6 +25,13 @@ function daysFromNow(days: number): Date {
   return date;
 }
 
+function dayBefore(date: Date | null, fallbackDaysAgo: number): Date {
+  if (!date) return daysAgo(fallbackDaysAgo);
+  const created = new Date(date);
+  created.setDate(created.getDate() - 1);
+  return created;
+}
+
 async function main() {
   await prisma.auditLog.deleteMany();
   await prisma.document.deleteMany();
@@ -253,7 +260,7 @@ async function main() {
         currentApproverRole: spec.currentApproverRole,
         submittedAt: spec.submittedAt,
         expectedDeliveryDate: daysFromNow(14),
-        createdAt: daysAgo(8 - spec.n),
+        createdAt: dayBefore(spec.submittedAt, 1),
       },
     }));
   }

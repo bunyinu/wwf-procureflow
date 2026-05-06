@@ -144,6 +144,10 @@ export default async function RequisitionDetail({
   const canClose =
     user.role === "PROCUREMENT" && req.status === "RECEIVED";
 
+  if ((searchParams.invalid || searchParams.error === "invalid") && canDecide) {
+    redirect(`/requisitions/${req.id}`);
+  }
+
   const alertKey = searchParams.error || (searchParams.invalid ? "invalid" : "") || (searchParams.denied ? "denied" : "");
   const alert = alertKey ? ALERT_MESSAGES[alertKey] : null;
   const isProcurementStep = req.status === "PROCUREMENT_REVIEW";

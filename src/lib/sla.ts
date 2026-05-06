@@ -36,14 +36,20 @@ export function computeStageTimings(input: {
   const now = input.now ?? new Date();
   const slaTable = { ...DEFAULT_SLA_DAYS, ...(input.slaDays ?? {}) };
   const stages: StageTiming[] = [];
+  const submittedAt =
+    input.submittedAt && input.submittedAt.getTime() >= input.createdAt.getTime()
+      ? input.submittedAt
+      : input.submittedAt
+        ? input.createdAt
+        : null;
 
   // Submission "stage" — from creation until first submitted timestamp
   // (only if the requisition has been submitted at least once).
-  if (input.submittedAt) {
+  if (submittedAt) {
     stages.push(buildStage(
       "SUBMITTED" as RequisitionStatus,
       input.createdAt,
-      input.submittedAt,
+      submittedAt,
       slaTable,
     ));
   }
@@ -52,12 +58,14 @@ export function computeStageTimings(input: {
   const sorted = [...input.approvals].sort(
     (a, b) => a.decidedAt.getTime() - b.decidedAt.getTime(),
   );
-  let cursor = input.submittedAt ?? input.createdAt;
+  let cursor = submittedAt ?? input.createdAt;
   for (const a of sorted) {
+    const decidedAt =
+      a.decidedAt.getTime() < cursor.getTime() ? cursor : a.decidedAt;
     stages.push(
-      buildStage(a.oldStatus as RequisitionStatus, cursor, a.decidedAt, slaTable),
+      buildStage(a.oldStatus as RequisitionStatus, cursor, decidedAt, slaTable),
     );
-    cursor = a.decidedAt;
+    cursor = decidedAt;
   }
   // Final open stage if status is still active and not a final state
   const FINAL = ["CLOSED", "REJECTED", "CANCELLED"];
@@ -77,7 +85,7 @@ function buildStage(
   now: Date = new Date(),
 ): StageTiming {
   const stop = end ?? now;
-  const durationMs = stop.getTime() - start.getTime();
+  const durationMs = Math.max(0, stop.getTime() - start.getTime());
   const slaDays = sla[stage] ?? 0;
   const overdue = slaDays > 0 && durationMs > slaDays * 86400_000;
   return {

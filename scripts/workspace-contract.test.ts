@@ -18,6 +18,7 @@ import {
 } from "../src/lib/workspaces";
 import { PROCUREMENT_TYPE_LABEL } from "../src/lib/enums";
 import { isValidTransition, resolveApprovedDecisionStatus } from "../src/lib/workflow";
+import { computeStageTimings } from "../src/lib/sla";
 
 const roles = [
   Role.REQUESTER,
@@ -188,6 +189,33 @@ assert.equal(
     isValidTransition("PROCUREMENT_REVIEW", procurementApproval.newStatus),
   true,
   "procurement approval route must be a valid workflow transition",
+);
+const thresholdApproval = resolveApprovedDecisionStatus({
+  fromStatus: "THRESHOLD_REVIEW",
+  amount: 5200,
+  procurementType: ProcurementType.PREQUALIFIED_SUPPLIER,
+});
+assert.deepEqual(
+  thresholdApproval,
+  { ok: true, newStatus: "PO_CREATED" },
+  "threshold approval must route cleanly to PO creation",
+);
+assert.equal(
+  thresholdApproval.ok &&
+    isValidTransition("THRESHOLD_REVIEW", thresholdApproval.newStatus),
+  true,
+  "threshold approval route must be a valid workflow transition",
+);
+assert.equal(
+  computeStageTimings({
+    createdAt: new Date("2026-05-03T00:00:00Z"),
+    submittedAt: new Date("2026-05-01T00:00:00Z"),
+    status: "THRESHOLD_REVIEW",
+    approvals: [],
+    now: new Date("2026-05-04T00:00:00Z"),
+  })[0]?.durationMs,
+  0,
+  "SLA rendering must never show negative durations when imported dates are inconsistent",
 );
 
 const actor = (role: string) => ({ id: `${role.toLowerCase()}-id`, role });
