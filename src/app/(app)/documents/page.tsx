@@ -26,27 +26,30 @@ export default async function DocumentsPage({
 }: {
   searchParams: { q?: string; category?: string };
 }) {
-  await requireRole("AUDITOR");
+  const user = await requireRole("AUDITOR", "SUPPLIER_MANAGER");
+  const canViewRequisitionDocs = user.role === "AUDITOR";
   const q = (searchParams.q ?? "").trim().toLowerCase();
   const cat = searchParams.category;
 
-  const docs = await prisma.document.findMany({
-    where: {
-      ...(cat ? { documentCategory: cat } : {}),
-      ...(q
-        ? {
-            OR: [
-              { fileName: { contains: q } },
-              { requisition: { title: { contains: q } } },
-              { requisition: { requisitionNumber: { contains: q } } },
-            ],
-          }
-        : {}),
-    },
-    include: { requisition: true, uploadedBy: true },
-    orderBy: { uploadedAt: "desc" },
-    take: 100,
-  });
+  const docs = canViewRequisitionDocs
+    ? await prisma.document.findMany({
+        where: {
+          ...(cat ? { documentCategory: cat } : {}),
+          ...(q
+            ? {
+                OR: [
+                  { fileName: { contains: q } },
+                  { requisition: { title: { contains: q } } },
+                  { requisition: { requisitionNumber: { contains: q } } },
+                ],
+              }
+            : {}),
+        },
+        include: { requisition: true, uploadedBy: true },
+        orderBy: { uploadedAt: "desc" },
+        take: 100,
+      })
+    : [];
 
   const supplierDocs = await prisma.supplierDocument.findMany({
     where: {
@@ -65,10 +68,12 @@ export default async function DocumentsPage({
     take: 100,
   });
 
-  const counts = await prisma.document.groupBy({
-    by: ["documentCategory"],
-    _count: { _all: true },
-  });
+  const counts = canViewRequisitionDocs
+    ? await prisma.document.groupBy({
+        by: ["documentCategory"],
+        _count: { _all: true },
+      })
+    : [];
   const total = counts.reduce((s, c) => s + c._count._all, 0) + supplierDocs.length;
 
   return (

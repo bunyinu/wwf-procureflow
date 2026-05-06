@@ -385,6 +385,7 @@ const schemaSource = readFileSync("prisma/schema.prisma", "utf8");
 const requisitionActionsSource = readFileSync("src/app/(app)/requisitions/actions.ts", "utf8");
 const supplierActionsSource = readFileSync("src/app/(app)/suppliers/actions.ts", "utf8");
 const requisitionDetailSource = readFileSync("src/app/(app)/requisitions/[id]/page.tsx", "utf8");
+const documentsPageSource = readFileSync("src/app/(app)/documents/page.tsx", "utf8");
 assert.equal(seedSource.includes("Role.MANAGER"), false, "seed must not create legacy manager role entries");
 assert.equal(seedSource.includes("Role.FINANCE"), false, "seed must not create legacy finance role entries");
 assert.equal(schemaSource.includes("model SupplierDocument"), true, "supplier due diligence documents must be persisted, not only described in UI");
@@ -409,6 +410,11 @@ assert.equal(
     requisitionDetailSource.includes("Modifier la réquisition"),
   true,
   "requester must be able to edit draft/returned requisitions, not only view them",
+);
+assert.equal(
+  documentsPageSource.includes('requireRole("AUDITOR", "SUPPLIER_MANAGER")'),
+  true,
+  "supplier manager must be able to review due diligence documents without entering the audit workspace",
 );
 
 console.log("workspace-contract-ok");
