@@ -38,7 +38,9 @@ import {
   closeRequisitionAction,
   createPOAction,
   createReceiptAction,
-  decideAction,
+  approveDecisionAction,
+  rejectDecisionAction,
+  returnDecisionAction,
   submitRequisitionAction,
 } from "../actions";
 
@@ -318,7 +320,7 @@ export default async function RequisitionDetail({
                 description={`Étape : ${ROLE_LABELS[expectedRole!]}`}
               />
               <CardBody>
-                <form action={decideAction} className="space-y-3">
+                <form action={approveDecisionAction} className="space-y-3">
                   <input type="hidden" name="id" value={req.id} />
                   {isProcurementStep ? (
                     <div className="rounded-md border border-purple-100 bg-purple-50/40 p-3">
@@ -367,8 +369,6 @@ export default async function RequisitionDetail({
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="submit"
-                      name="decision"
-                      value="APPROVED"
                       className="rounded-md bg-wwf-700 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-wwf-800"
                     >
                       {isProcurementStep ? "Valider méthode/processus" : "Approuver"}
@@ -378,9 +378,7 @@ export default async function RequisitionDetail({
                     req.status === "THRESHOLD_REVIEW" ? (
                       <button
                         type="submit"
-                        name="decision"
-                        value="RETURNED"
-                        formAction={decideAction}
+                        formAction={returnDecisionAction}
                         className="rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100"
                       >
                         {req.status === "THRESHOLD_REVIEW"
@@ -392,8 +390,7 @@ export default async function RequisitionDetail({
                     ) : null}
                     <button
                       type="submit"
-                      name="decision"
-                      value="REJECTED"
+                      formAction={rejectDecisionAction}
                       className="rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100"
                     >
                       {isProcurementStep ? "Bloquer processus" : "Rejeter"}

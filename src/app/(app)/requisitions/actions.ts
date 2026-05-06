@@ -392,6 +392,26 @@ export async function decideAction(formData: FormData) {
   redirect(`/requisitions/${parsed.id}`);
 }
 
+function setDecision(
+  formData: FormData,
+  decision: (typeof ApprovalDecision)[keyof typeof ApprovalDecision],
+) {
+  formData.set("decision", decision);
+  return decideAction(formData);
+}
+
+export async function approveDecisionAction(formData: FormData) {
+  return setDecision(formData, ApprovalDecision.APPROVED);
+}
+
+export async function returnDecisionAction(formData: FormData) {
+  return setDecision(formData, ApprovalDecision.RETURNED);
+}
+
+export async function rejectDecisionAction(formData: FormData) {
+  return setDecision(formData, ApprovalDecision.REJECTED);
+}
+
 export async function cancelRequisitionAction(formData: FormData) {
   const user = await requireUser();
   const id = String(formData.get("id"));

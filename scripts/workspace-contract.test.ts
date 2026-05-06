@@ -152,6 +152,20 @@ assert.equal(PROCUREMENT_TYPE_LABEL[ProcurementType.QUOTATION], "Cotations multi
 assert.equal(PROCUREMENT_TYPE_LABEL[ProcurementType.SOLE_SOURCE], "Source unique");
 assert.deepEqual(
   resolveApprovedDecisionStatus({
+    fromStatus: "HIERARCHICAL_REVIEW",
+    amount: 840,
+    procurementType: ProcurementType.UNCLASSIFIED,
+  }),
+  { ok: true, newStatus: "PROCUREMENT_REVIEW" },
+  "hierarchical approval must route cleanly to procurement review",
+);
+assert.equal(
+  isValidTransition("HIERARCHICAL_REVIEW", "PROCUREMENT_REVIEW"),
+  true,
+  "hierarchical approval transition must be valid",
+);
+assert.deepEqual(
+  resolveApprovedDecisionStatus({
     fromStatus: "PROCUREMENT_REVIEW",
     amount: 1850,
     procurementType: ProcurementType.UNCLASSIFIED,
